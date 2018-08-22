@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from numpy import absolute, append, arctan, array, asarray
 from numpy import cos
 from numpy import diag, dot
@@ -95,33 +96,10 @@ def MatrixBM3(k12,k21,k13,k31,k23,k32,delta1,delta2,delta3,
     return(K + Der + W + R)
 
 def matrix_exponential(A, w1, wrf, t, EigVal=False):
-    """Calculate the exact matrix exponential using the eigenvalue decomposition approach.
-
-    @param A:   The square matrix to calculate the matrix exponential of.
-    @type A:    numpy rank-2 array
-    @return:    The matrix exponential.  This will have the same dimensionality as the A matrix.
-    @rtype:     numpy rank-2 array
-    """
-
-    # Handle nan or inf elements of matrix
-    if isnan(A).any() == True or isinf(A).any() == True:
-        A = nan_to_num(A) # How to handle this?
-        print "NaN or Inf elements in BM Relaxation Matrix. Check parameter bounds or initial starting state."
-
-    # The eigenvalue decomposition.
-    # W are the real and imaginary eigenvalues of the matrix A
-    # V are all eigenvectors of the matrix A
     W, V = eig(A)
-
-    # Strip non-real components of complex eigenvalues
     W_orig = asarray(list(W))
     if iscomplexobj(W):
         W = W.real
-
-    # Calculate the exact exponential.
-    # Solution is of the form:
-    #  e^A = V.e^D.V^-1
-    #   where D is the diag matrix of the eigenvalues of A
     eA = dot(dot(V, diag(exp(W))), inv(V))
     if EigVal == False:
         return eA.real
