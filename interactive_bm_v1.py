@@ -34,7 +34,7 @@ df = pd.DataFrame()
 
 offset = np.linspace(-3000, 3000, 50)
 df['offset'] = offset
-lmf = lmf0 = 150.78
+lmf = lmf0 = 150.784627
 pB0, pC0 = .01, 0
 dwB0, dwC0 = 3, 0
 kexAB0, kexAC0, kexBC0 = 1000, 0, 0
@@ -242,10 +242,12 @@ l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, 
 
 # Initialize sliders
 axcolor = 'lightgrey'
-ax_pB = plt.axes([0.25, 0.15, 0.65, 0.015], facecolor=axcolor)
-ax_pC = plt.axes([0.25, 0.13, 0.65, 0.015], facecolor=axcolor)
-ax_dwB = plt.axes([0.25, 0.11, 0.65, 0.015], facecolor=axcolor)
-ax_dwC = plt.axes([0.25, 0.09, 0.65, 0.015], facecolor=axcolor)
+ax_pB = plt.axes([0.18, 0.15, 0.3, 0.015], facecolor=axcolor)
+ax_pC = plt.axes([0.62, 0.15, 0.3, 0.015], facecolor=axcolor)
+ax_dwB = plt.axes([0.18, 0.13, 0.3, 0.015], facecolor=axcolor)
+ax_dwC = plt.axes([0.62, 0.13, 0.3, 0.015], facecolor=axcolor)
+ax_R2b = plt.axes([0.18, 0.11, 0.3, 0.015], facecolor = axcolor)
+ax_R2c = plt.axes([0.62, 0.11, 0.3, 0.015], facecolor = axcolor)
 ax_kexAB = plt.axes([0.25, 0.07, 0.65, 0.015], facecolor=axcolor)
 ax_kexAC = plt.axes([0.25, 0.05, 0.65, 0.015], facecolor=axcolor)
 ax_kexBC = plt.axes([0.25, 0.03, 0.65, 0.015], facecolor=axcolor)
@@ -253,8 +255,10 @@ ax_kexBC = plt.axes([0.25, 0.03, 0.65, 0.015], facecolor=axcolor)
 # Set slider ID and values
 slider_pB = Slider(ax_pB, 'p$_B$', .001, .2, valinit = pB0)
 slider_pC = Slider(ax_pC, 'p$_C$', .001, .2, valinit = pC0)
-slider_dwB = Slider(ax_dwB, '$\Delta$$\omega$$_B$ (ppm)', -10, 10, valinit = dwB0)
-slider_dwC = Slider(ax_dwC, '$\Delta$$\omega$$_C$ (ppm)', -10, 10, valinit = dwC0)
+slider_dwB = Slider(ax_dwB, '$\Delta$$\omega$$_B$', -10, 10, valinit = dwB0)
+slider_dwC = Slider(ax_dwC, '$\Delta$$\omega$$_C$', -10, 10, valinit = dwC0)
+slider_R2b = Slider(ax_R2b, 'R$_{2b}$', 0, 50, valinit = R2a0)
+slider_R2c = Slider(ax_R2c, 'R$_{2c}$', 0, 50, valinit = R2a0)
 slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB (s$^{-1}$)', 0, 50000, valinit = kexAB0)
 slider_kexAC = Slider(ax_kexAC, 'k$_{ex}$AC (s$^{-1}$)', 0, 50000, valinit = kexAC0)
 slider_kexBC = Slider(ax_kexBC, 'k$_{ex}$BC (s$^{-1}$)', 0, 50000, valinit = kexBC0)
@@ -265,12 +269,14 @@ def update(val):
     pC = slider_pC.val
     dwB = slider_dwB.val 
     dwC = slider_dwC.val 
+    R2b = slider_R2b.val
+    R2c = slider_R2c.val
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val 
 
-    l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-    l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
+    l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
+    l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
 
     fig.canvas.draw_idle()
 
@@ -279,6 +285,8 @@ slider_pB.on_changed(update)
 slider_pC.on_changed(update)
 slider_dwB.on_changed(update)
 slider_dwC.on_changed(update)
+slider_R2b.on_changed(update)
+slider_R2c.on_changed(update)
 slider_kexAB.on_changed(update)
 slider_kexAC.on_changed(update)
 slider_kexBC.on_changed(update)
@@ -301,13 +309,15 @@ rax = plt.axes([0.01, 0.35, 0.15, 0.1])
 radio = RadioButtons(rax, ('Carbon', 'Nitrogen'))
 
 def changelmf(label):
-    lmfdict = {'Carbon':150.78, 'Nitrogen':60.8}
+    lmfdict = {'Carbon':150.784627, 'Nitrogen':60.76302}
     global lmf
     lmf = lmfdict[label]
     pB = slider_pB.val 
     pC = slider_pC.val
     dwB = slider_dwB.val 
     dwC = slider_dwC.val 
+    R2b = slider_R2b.val
+    R2c = slider_R2c.val
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
