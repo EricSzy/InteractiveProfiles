@@ -217,7 +217,6 @@ def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c
 def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset, w1):
     #Points are sacrificed for speed; may cause issues; should be okay since err = 0 
     time = linspace(0, 0.2, 3)
-    df = DataFrame()
     offset2pi = array(offset * 2 * pi)
     w1 = w1 * 2 * pi 
     #R2values = zeros(offset2pi.shape)
@@ -226,8 +225,8 @@ def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2
         R2values.append(CalcR2eff(x, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time))
     return R2values
 # Initial plotted data
-l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 2, color = 'C0')
-l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 2, color = 'C3')
+l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C0')
+l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C3')
 
 
 # Initialize sliders
