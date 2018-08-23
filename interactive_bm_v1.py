@@ -1,6 +1,3 @@
-
-test = 0
-
 from numpy import absolute, append, arctan, array, asarray
 from numpy import cos
 from numpy import diag, dot
