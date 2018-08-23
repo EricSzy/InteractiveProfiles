@@ -15,11 +15,11 @@ from numpy import vstack
 from numpy import zeros
 from numpy.linalg import eig, inv, norm
 from numpy.random import normal
-from pandas import DataFrame
 from scipy.stats import norm as normDist
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
+
 
 fig, ax = plt.subplots(figsize = (7, 7))
 plt.subplots_adjust(left=0.25, bottom=0.25)
@@ -120,11 +120,6 @@ def SimMagVecs(dt,M0,Ms,lOmegaA,lOmegaB,lOmegaC,w1,wrf):
     # Project mag along average effective
     Peff = PeffA + PeffB + PeffC
     Peff_err = 0
-
-    # return array([Peff, Peff_err, PeffA, PeffB, PeffC,
-    #                  Mxa, Mya, Mza,
-    #                  Mxb, Myb, Mzb,
-    #                  Mxc, Myc, Mzc])
     return Peff
 
 def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, AlignMag = "auto"):
@@ -146,7 +141,7 @@ def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, AlignMag = "
         delta3 = (uOmega3 - wrf) # rad/s
         deltaAvg = (uOmega1 - wrf) # rad/s, avg delta is GS - carrier
 
-        thetaAvg = float(arctan(w1/deltaAvg)) # == arccot(deltaAvg/(w1*))
+        thetaAvg = arctan(w1/deltaAvg) # == arccot(deltaAvg/(w1*))
         theta1 = theta2 = theta3 = thetaAvg    
 
         ## GS,ES1,ES2 along average state
@@ -223,13 +218,13 @@ def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2
     #Points are sacrificed for speed; may cause issues; should be okay since err = 0 
     time = linspace(0, 0.2, 3)
     df = DataFrame()
-    df['offset'] = offset
-    df['offset2pi'] = df['offset'] * 2 * pi
+    offset2pi = array(offset * 2 * pi)
     w1 = w1 * 2 * pi 
-
-    df['R2eff'] = df['offset2pi'].apply(CalcR2eff, args=(w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time))
-    return df['R2eff']
-
+    #R2values = zeros(offset2pi.shape)
+    R2values = []
+    for x in offset2pi:
+        R2values.append(CalcR2eff(x, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time))
+    return R2values
 # Initial plotted data
 l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 2, color = 'C0')
 l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 2, color = 'C3')
