@@ -1,7 +1,7 @@
 from numpy import *
+from nmrglue import proc_base
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
-from nmrglue import proc_base
 
 fig, ax = plt.subplots(figsize = (7, 7))
 plt.subplots_adjust(left=0.25, bottom=0.25)
