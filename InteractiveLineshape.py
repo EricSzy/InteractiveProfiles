@@ -1,15 +1,17 @@
-from numpy import *
+from numpy import arange, argmax, array, diag, dot, exp, linalg, linspace, pi, zeros
 from nmrglue import proc_base
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
 
 fig, ax = plt.subplots(figsize = (7, 7))
 plt.subplots_adjust(left=0.25, bottom=0.25)
+plt.ylabel('Intensity', fontsize = 16)
+plt.xlabel(r'$\omega\,(ppm)$', fontsize=16)
 
-pB0 = .05
+pB0 = .02
 wA0, wB0 = 0, 3
 kexAB0 = 1000
-R1a0 = R1b0 = 2.5
+R1a0 = R1b0 = 2
 R2a0, R2b0 = 20, 20
 lmf = 150.784627  # 1H for 700MHz spectrometer
 aq = 1.0
@@ -17,6 +19,13 @@ N = 1024 * 4
 T = linspace(0., aq, N)
 dt = aq / N
 xf = arange(-1./(2*dt), 1./(2*dt), 1./dt/N)/lmf
+
+def setplot(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b):
+    new_y = data(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b)
+    l.set_ydata(new_y)
+    xmax = xf[argmax(new_y)]
+    text = 'Main peak @ %s ppm' % format(xmax, '.4f')
+    ax.set_title(text)
 
 def set_x(lmf):
 	return arange(-1./(2*dt), 1./(2*dt), 1./dt/N)/lmf
@@ -48,7 +57,11 @@ def data(lmf, pB, wA, wB, kexAB, R1a, R1b, R2a, R2b):
 	return proc_base.fft(fid).real
 
 # Inital Plotted Data
-l, = plt.plot(xf, data(lmf, pB0, wA0, wB0, kexAB0, R1a0, R1b0, R2a0, R2b0))
+y0 = data(lmf, pB0, wA0, wB0, kexAB0, R1a0, R1b0, R2a0, R2b0)
+l, = plt.plot(xf, y0)
+xmax = xf[argmax(y0)]
+text = 'Main peak @ %s ppm' % format(xmax, '.4f')
+ax.set_title(text)
 
 # Initallize Sliders
 axcolor = 'lightgrey'
@@ -74,9 +87,7 @@ def update(val):
     R2a = slider_R2a.val
     R2b = slider_R2b.val
     kexAB = slider_kexAB.val 
-    
-    l.set_ydata(data(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b))
-    
+    setplot(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b)
     fig.canvas.draw_idle()
 
 slider_pB.on_changed(update)
@@ -100,11 +111,11 @@ def changelmf(label):
     R2a = slider_R2a.val
     R2b = slider_R2b.val
     kexAB = slider_kexAB.val 
-
-    l.set_ydata(data(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b))
     l.set_xdata(set_x(lmf))
+    setplot(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b)
     ax.axis([min(set_x(lmf)), max(set_x(lmf)), None, None])
     plt.draw()
+
 radio.on_clicked(changelmf)
 
 plt.show()
