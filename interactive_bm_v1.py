@@ -1,24 +1,12 @@
 from numpy import absolute, append, arctan, array, asarray
-from numpy import cos
-from numpy import diag, dot
-from numpy import exp
-from numpy import float64
-from numpy import hstack
-from numpy import iscomplexobj, iscomplex, isinf, isnan
-from numpy import linspace, linalg, log
-from numpy import nan_to_num
-from numpy import pi
-from numpy import shape, sin, std, sqrt
-from numpy import tan
-from numpy import vstack
-from numpy import zeros
+from numpy import diag, dot, exp
+from numpy import float64, iscomplexobj, linspace, linalg, log
+from numpy import pi, shape, sin, tan, vstack, zeros
+from numpy import apply_along_axis
 from numpy.linalg import eig, inv, norm
-from numpy.random import normal
-from scipy.stats import norm as normDist
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
-
 
 fig, ax = plt.subplots(figsize = (7, 7))
 plt.subplots_adjust(left=0.25, bottom=0.25)
@@ -118,10 +106,9 @@ def SimMagVecs(dt,M0,Ms,lOmegaA,lOmegaB,lOmegaC,w1,wrf):
     PeffC = dot(vstack((Mxc,Myc,Mzc)).T, lOmegaC)[0]
     # Project mag along average effective
     Peff = PeffA + PeffB + PeffC
-    Peff_err = 0
     return Peff
 
-def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, AlignMag = "auto"):
+def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
 
     if pB > pC:
     	exchReg = kexAB / absolute(dwB)
@@ -192,7 +179,7 @@ def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c
 
     lOmegaA, lOmegaB, lOmegaC, uOmega1, uOmega2, uOmega3, uOmegaAvg,\
         delta1, delta2, delta3, deltaAvg, theta1, theta2, theta3, thetaAvg = \
-                            AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, "auto")
+                            AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC)
     Ma = pA*lOmegaA 
     Mb = pB*lOmegaB 
     Mc = pC*lOmegaC 
@@ -202,7 +189,7 @@ def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c
     # Initial magnetization
     M0 = array([Ma[0],Mb[0],Mc[0],Ma[1],Mb[1],Mc[1],Ma[2],Mb[2],Mc[2]], float64)
     magVecs = asarray([SimMagVecs(x,M0,Ms,lOmegaA,lOmegaB,lOmegaC,w1,wrf) for x in time])
-
+    
     # Fit decay for R1rho
     popt, pcov = curve_fit(ExpDecay, time, magVecs, (1., R1a))
     R1p = popt[1]
@@ -217,12 +204,11 @@ def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2
     #Points are sacrificed for speed; may cause issues; should be okay since err = 0 
     time = linspace(0, 0.2, 3)
     offset2pi = array(offset * 2 * pi)
+    offset2pi = vstack(offset2pi)
     w1 = w1 * 2 * pi 
-    #R2values = zeros(offset2pi.shape)
-    R2values = []
-    for x in offset2pi:
-        R2values.append(CalcR2eff(x, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time))
-    return R2values
+    return apply_along_axis(CalcR2eff, 1, offset2pi, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time)
+
+    
 # Initial plotted data
 l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C0')
 l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C3')
@@ -263,8 +249,10 @@ def update(val):
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val 
 
-    l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
-    l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
+    if slps.get_status()[0] == True:
+        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
+    if slps.get_status()[1] == True:
+        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
 
     fig.canvas.draw_idle()
 
@@ -284,15 +272,28 @@ lines = [l, l2]
 rax = plt.axes([0.01, 0.2, 0.15, 0.15])
 labels = (['500 Hz', '1000 Hz'])
 visibility = [line.get_visible() for line in lines]
-check = CheckButtons(rax, labels, visibility)
+slps = CheckButtons(rax, labels, visibility)
 
-def test_function(label):
-	index = labels.index(label)
-	lines[index].set_visible(not lines[index].get_visible())
-	plt.draw()
-check.on_clicked(test_function)
+def show_slps(label):
+    index = labels.index(label)
+    lines[index].set_visible(not lines[index].get_visible())
+    pB = slider_pB.val 
+    pC = slider_pC.val
+    dwB = slider_dwB.val 
+    dwC = slider_dwC.val 
+    R2b = slider_R2b.val
+    R2c = slider_R2c.val
+    kexAB = slider_kexAB.val 
+    kexAC = slider_kexAC.val 
+    kexBC = slider_kexBC.val
+    if slps.get_status()[0] == True:
+        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
+    if slps.get_status()[1] == True:
+        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
+    plt.draw()
+slps.on_clicked(show_slps)
 
-# RadioButtons for lmf
+# RadioButtons to switch atom type
 rax = plt.axes([0.01, 0.35, 0.15, 0.1])
 radio = RadioButtons(rax, ('Carbon', 'Nitrogen'))
 
@@ -309,18 +310,19 @@ def changelmf(label):
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
-
-    l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-    l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
+    if slps.get_status()[0] == True:
+        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
+    if slps.get_status()[1] == True:
+        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
     plt.draw()
 radio.on_clicked(changelmf)
 
-# Adjust x-axis
+# Slider to adjust x-axis
 def update_axis(val):
     ax.axis([-3000, 3000, 10, val])
 
 ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
-slider_axis = Slider(ax_axis, 'x-axis lim', 15, 200, valinit = 40)
+slider_axis = Slider(ax_axis, 'x-axis lim', 15, 300, valinit = 40)
 slider_axis.on_changed(update_axis)
 
 # Reset Button
@@ -337,13 +339,12 @@ def reset(event):
     slider_kexAB.reset()
     slider_kexAC.reset()
     slider_kexBC.reset()
-    aliser_axis.reset()
+    slider_axis.reset()
     l.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
     l2.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
     plt.draw()
 
 button.on_clicked(reset)
-
 
 # All set now show it
 plt.show()
