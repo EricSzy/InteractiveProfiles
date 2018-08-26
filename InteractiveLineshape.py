@@ -78,7 +78,7 @@ slider_wA = Slider(ax_wA, '$\omega$$_A$', -10, 10, valinit = wA0)
 slider_wB = Slider(ax_wB, '$\omega$$_B$', -10, 10, valinit = wB0)
 slider_R2a = Slider(ax_R2a, 'R$_{2a}$', 0, 50, valinit = R2a0)
 slider_R2b = Slider(ax_R2b, 'R$_{2b}$', 0, 50, valinit = R2b0)
-slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB', 0, 10000, valinit = kexAB0)
+slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB', 0, 50000, valinit = kexAB0)
 
 def update(val):
     pB = slider_pB.val 
