@@ -16,6 +16,7 @@ plt.title('Interactive RD Plot', fontsize = 20)
 plt.axis([-3000, 3000, 10, 60])
 
 offset = linspace(-3000, 3000, 50)
+Field = 600
 lmf = lmf0 = 150.784627
 pB0, pC0 = .01, 0
 dwB0, dwC0 = 3, 0
@@ -270,7 +271,7 @@ slider_kexBC.on_changed(update)
 
 # CheckButtons for SLP
 lines = [l, l2]
-rax = plt.axes([0.01, 0.2, 0.15, 0.15])
+rax = plt.axes([0.01, 0.2, 0.15, 0.1])
 labels = (['500 Hz', '1000 Hz'])
 visibility = [line.get_visible() for line in lines]
 slps = CheckButtons(rax, labels, visibility)
@@ -295,11 +296,18 @@ def show_slps(label):
 slps.on_clicked(show_slps)
 
 # RadioButtons to switch atom type
-rax = plt.axes([0.01, 0.35, 0.15, 0.1])
-radio = RadioButtons(rax, ('Carbon', 'Nitrogen'))
+lmfax = plt.axes([0.01, 0.3, 0.15, 0.1])
+lmfradio = RadioButtons(lmfax, ('Carbon', 'Nitrogen'))
 
 def changelmf(label):
-    lmfdict = {'Carbon':150.784627, 'Nitrogen':60.76302}
+    if Field == 600:
+        lmfdict = {'Carbon':150.784627, 'Nitrogen':60.76302}
+    if Field == 700:
+        lmfdict = {'Carbon':176.048, 'Nitrogen':70.84}
+    if Field == 800:
+        lmfdict = {'Carbon':201.193, 'Nitrogen':80.96}
+    if Field == 1100:
+        lmfdict = {'Carbon':276.43, 'Nitrogen':111.32}
     global lmf
     lmf = lmfdict[label]
     pB = slider_pB.val 
@@ -316,7 +324,19 @@ def changelmf(label):
     if slps.get_status()[1] == True:
         l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
     plt.draw()
-radio.on_clicked(changelmf)
+lmfradio.on_clicked(changelmf)
+
+# RadioButtons to switch B0
+Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
+FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
+
+def changeField(label):
+    FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
+    global Field
+    Field = FieldDict[label]
+    changelmf(lmfradio.value_selected)
+
+FieldRadio.on_clicked(changeField)
 
 # Slider to adjust x-axis
 def update_axis(val):
