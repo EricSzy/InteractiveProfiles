@@ -127,10 +127,11 @@ def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
         delta3 = (uOmega3 - wrf) # rad/s
         deltaAvg = (uOmega1 - wrf) # rad/s, avg delta is GS - carrier
 
-        thetaAvg = arctan(w1/deltaAvg) # == arccot(deltaAvg/(w1*))
+        thetaAvg = float(arctan(w1/deltaAvg)) # == arccot(deltaAvg/(w1*))
         theta1 = theta2 = theta3 = thetaAvg    
 
         ## GS,ES1,ES2 along average state
+
         tempState = asarray([w1,0.,deltaAvg], float64)
         # Normalize vector
         lOmegaA = tempState / linalg.norm(tempState)
@@ -205,7 +206,7 @@ def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2
     time = linspace(0, 0.2, 3)
     offset2pi = array(offset * 2 * pi)
     offset2pi = vstack(offset2pi)
-    w1 = w1 * 2 * pi 
+    w1 = w1 * 2 * pi
     return apply_along_axis(CalcR2eff, 1, offset2pi, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time)
 
     
@@ -227,15 +228,15 @@ ax_kexAC = plt.axes([0.25, 0.05, 0.65, 0.015], facecolor=axcolor)
 ax_kexBC = plt.axes([0.25, 0.03, 0.65, 0.015], facecolor=axcolor)
 
 # Set slider ID and values
-slider_pB = Slider(ax_pB, 'p$_B$', .001, .2, valinit = pB0)
-slider_pC = Slider(ax_pC, 'p$_C$', .001, .2, valinit = pC0)
+slider_pB = Slider(ax_pB, 'p$_B$', 0, .2, valinit = pB0)
+slider_pC = Slider(ax_pC, 'p$_C$', 0, .2, valinit = pC0)
 slider_dwB = Slider(ax_dwB, '$\Delta$$\omega$$_B$', -10, 10, valinit = dwB0)
 slider_dwC = Slider(ax_dwC, '$\Delta$$\omega$$_C$', -10, 10, valinit = dwC0)
 slider_R2b = Slider(ax_R2b, 'R$_{2b}$', 0, 50, valinit = R2a0)
 slider_R2c = Slider(ax_R2c, 'R$_{2c}$', 0, 50, valinit = R2a0)
-slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB (s$^{-1}$)', 0, 50000, valinit = kexAB0)
-slider_kexAC = Slider(ax_kexAC, 'k$_{ex}$AC (s$^{-1}$)', 0, 50000, valinit = kexAC0)
-slider_kexBC = Slider(ax_kexBC, 'k$_{ex}$BC (s$^{-1}$)', 0, 50000, valinit = kexBC0)
+slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB (s$^{-1}$)', 0, 15000, valinit = kexAB0)
+slider_kexAC = Slider(ax_kexAC, 'k$_{ex}$AC (s$^{-1}$)', 0, 15000, valinit = kexAC0)
+slider_kexBC = Slider(ax_kexBC, 'k$_{ex}$BC (s$^{-1}$)', 0, 15000, valinit = kexBC0)
 
 # Function to update the y-data values when sliders are changed
 def update(val):
