@@ -8,22 +8,16 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
 
-fig, ax = plt.subplots(figsize = (7, 7))
-plt.subplots_adjust(left=0.25, bottom=0.25)
-plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
-plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
-plt.title('Interactive RD Plot', fontsize = 20)
-plt.axis([-3000, 3000, 10, 60])
-
-offset = linspace(-3000, 3000, 50)
+# Setting Some Inital Values
 Field = 600
-lmf = lmf0 = 150.784627
+lmf = lmf0 = 150.870
 pB0, pC0 = .01, 0
 dwB0, dwC0 = 3, 0
 kexAB0, kexAC0, kexBC0 = 1000, 0, 0
 R1a0 = R1b0 = R1c0 = 2.5
 R2a0 = R2b0 = R2c0 = 20
 
+# Functions for the calculation of the Bloch equations.
 def ExpDecay(x,a,b):
     return a*exp(-b*x)
 
@@ -110,11 +104,10 @@ def SimMagVecs(dt,M0,Ms,lOmegaA,lOmegaB,lOmegaC,w1,wrf):
     return Peff
 
 def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
-
     if pB > pC:
-    	exchReg = kexAB / absolute(dwB)
+        exchReg = kexAB / absolute(dwB)
     else:
-    	exchReg = kexAC / absolute(dwC)	
+        exchReg = kexAC / absolute(dwC) 
     
     if exchReg <= 1.:
 
@@ -165,6 +158,7 @@ def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
             theta1, theta2, theta3, thetaAvg)
 
 def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time):
+    # Function is applyed to an array of offset values in the data function, to calcuate an R2eff value. 
     pA = 1 - (pB + pC)
     dwB = dwB * lmf * 2 * pi * -1
     dwC = dwC * lmf * 2 * pi * -1
@@ -203,169 +197,332 @@ def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c
 
 
 def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset, w1):
-    #Points are sacrificed for speed; may cause issues; should be okay since err = 0 
-    time = linspace(0, 0.2, 3)
+    # Takes in exchange parameters and calcuates R2eff values. 
+    time = linspace(0, 0.2, 3) #Points are sacrificed for speed; may cause issues; should be okay since err = 0 
     offset2pi = array(offset * 2 * pi)
     offset2pi = vstack(offset2pi)
     w1 = w1 * 2 * pi
     return apply_along_axis(CalcR2eff, 1, offset2pi, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time)
 
+# Function for setting shared plot sliders
+def initializeSliders():
+    # Initialize sliders
+    axcolor = 'lightgrey'
+    ax_pB = plt.axes([0.18, 0.15, 0.3, 0.015], facecolor=axcolor)
+    ax_pC = plt.axes([0.62, 0.15, 0.3, 0.015], facecolor=axcolor)
+    ax_dwB = plt.axes([0.18, 0.13, 0.3, 0.015], facecolor=axcolor)
+    ax_dwC = plt.axes([0.62, 0.13, 0.3, 0.015], facecolor=axcolor)
+    ax_R2b = plt.axes([0.18, 0.11, 0.3, 0.015], facecolor = axcolor)
+    ax_R2c = plt.axes([0.62, 0.11, 0.3, 0.015], facecolor = axcolor)
+    ax_kexAB = plt.axes([0.25, 0.07, 0.65, 0.015], facecolor=axcolor)
+    ax_kexAC = plt.axes([0.25, 0.05, 0.65, 0.015], facecolor=axcolor)
+    ax_kexBC = plt.axes([0.25, 0.03, 0.65, 0.015], facecolor=axcolor)
+
+    # Set slider ID and values
+    slider_pB = Slider(ax_pB, 'p$_B$', 0, .2, valfmt = '%.3f', valinit = pB0)
+    slider_pC = Slider(ax_pC, 'p$_C$', 0, .2, valfmt = '%.3f', valinit = pC0)
+    slider_dwB = Slider(ax_dwB, '$\Delta$$\omega$$_B$', -10, 10, valinit = dwB0)
+    slider_dwC = Slider(ax_dwC, '$\Delta$$\omega$$_C$', -10, 10, valinit = dwC0)
+    slider_R2b = Slider(ax_R2b, 'R$_{2b}$', 0, 50, valinit = R2a0)
+    slider_R2c = Slider(ax_R2c, 'R$_{2c}$', 0, 50, valinit = R2a0)
+    slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB (s$^{-1}$)', 0, 15000, valinit = kexAB0)
+    slider_kexAC = Slider(ax_kexAC, 'k$_{ex}$AC (s$^{-1}$)', 0, 15000, valinit = kexAC0)
+    slider_kexBC = Slider(ax_kexBC, 'k$_{ex}$BC (s$^{-1}$)', 0, 15000, valinit = kexBC0)
     
-# Initial plotted data
-l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C0')
-l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C3')
+    return slider_pB, slider_pC, slider_dwB,\
+        slider_dwC, slider_R2b, slider_R2c,\
+        slider_kexAB, slider_kexAC, slider_kexBC
 
-
-# Initialize sliders
-axcolor = 'lightgrey'
-ax_pB = plt.axes([0.18, 0.15, 0.3, 0.015], facecolor=axcolor)
-ax_pC = plt.axes([0.62, 0.15, 0.3, 0.015], facecolor=axcolor)
-ax_dwB = plt.axes([0.18, 0.13, 0.3, 0.015], facecolor=axcolor)
-ax_dwC = plt.axes([0.62, 0.13, 0.3, 0.015], facecolor=axcolor)
-ax_R2b = plt.axes([0.18, 0.11, 0.3, 0.015], facecolor = axcolor)
-ax_R2c = plt.axes([0.62, 0.11, 0.3, 0.015], facecolor = axcolor)
-ax_kexAB = plt.axes([0.25, 0.07, 0.65, 0.015], facecolor=axcolor)
-ax_kexAC = plt.axes([0.25, 0.05, 0.65, 0.015], facecolor=axcolor)
-ax_kexBC = plt.axes([0.25, 0.03, 0.65, 0.015], facecolor=axcolor)
-
-# Set slider ID and values
-slider_pB = Slider(ax_pB, 'p$_B$', 0, .2, valinit = pB0)
-slider_pC = Slider(ax_pC, 'p$_C$', 0, .2, valinit = pC0)
-slider_dwB = Slider(ax_dwB, '$\Delta$$\omega$$_B$', -10, 10, valinit = dwB0)
-slider_dwC = Slider(ax_dwC, '$\Delta$$\omega$$_C$', -10, 10, valinit = dwC0)
-slider_R2b = Slider(ax_R2b, 'R$_{2b}$', 0, 50, valinit = R2a0)
-slider_R2c = Slider(ax_R2c, 'R$_{2c}$', 0, 50, valinit = R2a0)
-slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB (s$^{-1}$)', 0, 15000, valinit = kexAB0)
-slider_kexAC = Slider(ax_kexAC, 'k$_{ex}$AC (s$^{-1}$)', 0, 15000, valinit = kexAC0)
-slider_kexBC = Slider(ax_kexBC, 'k$_{ex}$BC (s$^{-1}$)', 0, 15000, valinit = kexBC0)
-
-# Function to update the y-data values when sliders are changed
-def update(val):
-    pB = slider_pB.val 
-    pC = slider_pC.val
-    dwB = slider_dwB.val 
-    dwC = slider_dwC.val 
-    R2b = slider_R2b.val
-    R2c = slider_R2c.val
-    kexAB = slider_kexAB.val 
-    kexAC = slider_kexAC.val 
-    kexBC = slider_kexBC.val 
-
-    if slps.get_status()[0] == True:
-        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-    if slps.get_status()[1] == True:
-        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
-
-    fig.canvas.draw_idle()
-
-# Update profile when a slider is changed
-slider_pB.on_changed(update)
-slider_pC.on_changed(update)
-slider_dwB.on_changed(update)
-slider_dwC.on_changed(update)
-slider_R2b.on_changed(update)
-slider_R2c.on_changed(update)
-slider_kexAB.on_changed(update)
-slider_kexAC.on_changed(update)
-slider_kexBC.on_changed(update)
-
-# CheckButtons for SLP
-lines = [l, l2]
-rax = plt.axes([0.01, 0.2, 0.15, 0.1])
-labels = (['500 Hz', '1000 Hz'])
-visibility = [line.get_visible() for line in lines]
-slps = CheckButtons(rax, labels, visibility)
-
-def show_slps(label):
-    index = labels.index(label)
-    lines[index].set_visible(not lines[index].get_visible())
-    pB = slider_pB.val 
-    pC = slider_pC.val
-    dwB = slider_dwB.val 
-    dwC = slider_dwC.val 
-    R2b = slider_R2b.val
-    R2c = slider_R2c.val
-    kexAB = slider_kexAB.val 
-    kexAC = slider_kexAC.val 
-    kexBC = slider_kexBC.val
-    if slps.get_status()[0] == True:
-        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-    if slps.get_status()[1] == True:
-        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
-    plt.draw()
-slps.on_clicked(show_slps)
-
-# RadioButtons to switch atom type
-lmfax = plt.axes([0.01, 0.3, 0.15, 0.1])
-lmfradio = RadioButtons(lmfax, ('Carbon', 'Nitrogen'))
-
-def changelmf(label):
+def get_lmf(label):
     if Field == 600:
-        lmfdict = {'Carbon':150.784627, 'Nitrogen':60.76302}
+        lmfdict = {'Carbon':150.870, 'Nitrogen':60.821}
     if Field == 700:
-        lmfdict = {'Carbon':176.048, 'Nitrogen':70.84}
+        lmfdict = {'Carbon':176.015, 'Nitrogen':70.957}
     if Field == 800:
-        lmfdict = {'Carbon':201.193, 'Nitrogen':80.96}
+        lmfdict = {'Carbon':201.160, 'Nitrogen':81.094}
     if Field == 1100:
-        lmfdict = {'Carbon':276.43, 'Nitrogen':111.32}
+        lmfdict = {'Carbon':276.595, 'Nitrogen':111.505}
     global lmf
     lmf = lmfdict[label]
-    pB = slider_pB.val 
-    pC = slider_pC.val
-    dwB = slider_dwB.val 
-    dwC = slider_dwC.val 
-    R2b = slider_R2b.val
-    R2c = slider_R2c.val
-    kexAB = slider_kexAB.val 
-    kexAC = slider_kexAC.val 
-    kexBC = slider_kexBC.val
-    if slps.get_status()[0] == True:
-        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-    if slps.get_status()[1] == True:
-        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
-    plt.draw()
-lmfradio.on_clicked(changelmf)
 
-# RadioButtons to switch B0
-Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
-FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
+def plot1():    
+    fig, ax = plt.subplots(figsize = (7, 7))
+    plt.subplots_adjust(left=0.25, bottom=0.25)
+    plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
+    plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
+    plt.title('Interactive RD Plot', fontsize = 20)
+    plt.axis([-3000, 3000, 10, 60])
+    axcolor = 'lightgrey'
+    
+    # Initial plotted data
+    offset = linspace(-3000, 3000, 50)
+    l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C0')
+    l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C3')
 
-def changeField(label):
-    FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
-    global Field
-    Field = FieldDict[label]
-    changelmf(lmfradio.value_selected)
+    ## Update the y-data values when sliders are changed
+    # Set Sliders
+    slider_pB, slider_pC, slider_dwB, \
+        slider_dwC, slider_R2b, slider_R2c, \
+        slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
+    # Function to update y-data when slider changed
+    def update(val):
+        pB = slider_pB.val 
+        pC = slider_pC.val
+        dwB = slider_dwB.val 
+        dwC = slider_dwC.val 
+        R2b = slider_R2b.val
+        R2c = slider_R2c.val
+        kexAB = slider_kexAB.val 
+        kexAC = slider_kexAC.val 
+        kexBC = slider_kexBC.val 
+        if slps.get_status()[0] == True: # These check status of check boxes to see if visable and should be plotted
+            l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
+        if slps.get_status()[1] == True:
+            l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
+        fig.canvas.draw_idle()
+    # Update profile when a slider is changed
+    slider_pB.on_changed(update)
+    slider_pC.on_changed(update)
+    slider_dwB.on_changed(update)
+    slider_dwC.on_changed(update)
+    slider_R2b.on_changed(update)
+    slider_R2c.on_changed(update)
+    slider_kexAB.on_changed(update)
+    slider_kexAC.on_changed(update)
+    slider_kexBC.on_changed(update)
 
-FieldRadio.on_clicked(changeField)
+    ## CheckButtons for turning SLP on/off
+    # Make the Check Button axes
+    lines = [l, l2]
+    vis_ax = plt.axes([0.01, 0.2, 0.15, 0.1])
+    labels = (['500 Hz', '1000 Hz'])
+    visibility = [line.get_visible() for line in lines]
+    slps = CheckButtons(vis_ax, labels, visibility)
+    # Function when check buttons changed
+    def show_slps(label):
+        index = labels.index(label)
+        lines[index].set_visible(not lines[index].get_visible())
+        pB = slider_pB.val 
+        pC = slider_pC.val
+        dwB = slider_dwB.val 
+        dwC = slider_dwC.val 
+        R2b = slider_R2b.val
+        R2c = slider_R2c.val
+        kexAB = slider_kexAB.val 
+        kexAC = slider_kexAC.val 
+        kexBC = slider_kexBC.val
+        if slps.get_status()[0] == True:
+            l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
+        if slps.get_status()[1] == True:
+            l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
+        plt.draw()
+    # Call function on click
+    slps.on_clicked(show_slps)
 
-# Slider to adjust x-axis
-def update_axis(val):
-    ax.axis([-3000, 3000, 10, val])
+    ## RadioButtons to switch atom type
+    # Make the RadioButton axes
+    type_ax = plt.axes([0.01, 0.3, 0.15, 0.1])
+    atomtypeButton = RadioButtons(type_ax, ('Carbon', 'Nitrogen'))
+    # Function
+    def changelmf(label):
+        get_lmf(label)
+        pB = slider_pB.val 
+        pC = slider_pC.val
+        dwB = slider_dwB.val 
+        dwC = slider_dwC.val 
+        R2b = slider_R2b.val
+        R2c = slider_R2c.val
+        kexAB = slider_kexAB.val 
+        kexAC = slider_kexAC.val 
+        kexBC = slider_kexBC.val
+        if slps.get_status()[0] == True:
+            l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
+        if slps.get_status()[1] == True:
+            l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
+        plt.draw()
+    # Execute on click
+    atomtypeButton.on_clicked(changelmf)
 
-ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
-slider_axis = Slider(ax_axis, 'x-axis lim', 15, 300, valinit = 40)
-slider_axis.on_changed(update_axis)
+    ## RadioButtons to switch B0
+    # Makes axes
+    Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
+    FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
+    # Function
+    def changeField(label):
+        FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
+        global Field
+        Field = FieldDict[label]
+        # Once the field is changes, update the lmf
+        changelmf(atomtypeButton.value_selected)
+    # Execute on click
+    FieldRadio.on_clicked(changeField)
 
-# Reset Button
-resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
-button = Button(resetax, 'Reset')
+    ## Slider to adjust x-axis
+    # Make
+    ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
+    slider_axis = Slider(ax_axis, 'x-axis lim', 15, 300, valinit = 40)
+    # Function
+    def update_axis(val):
+        ax.axis([-3000, 3000, 10, val])
+    # Call on changed
+    slider_axis.on_changed(update_axis)
 
-def reset(event):
-    slider_pB.reset()
-    slider_pC.reset()
-    slider_dwB.reset()
-    slider_dwC.reset()
-    slider_R2b.reset()
-    slider_R2c.reset()
-    slider_kexAB.reset()
-    slider_kexAC.reset()
-    slider_kexBC.reset()
-    slider_axis.reset()
-    l.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-    l2.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
-    plt.draw()
+    ## Reset Button
+    # Make
+    resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
+    button = Button(resetax, 'Reset')
+    # Function
+    def reset(event):
+        slider_pB.reset()
+        slider_pC.reset()
+        slider_dwB.reset()
+        slider_dwC.reset()
+        slider_R2b.reset()
+        slider_R2c.reset()
+        slider_kexAB.reset()
+        slider_kexAC.reset()
+        slider_kexBC.reset()
+        slider_axis.reset()
+        l.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
+        l2.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
+        plt.draw()
+    # Call
+    button.on_clicked(reset)
 
-button.on_clicked(reset)
+    ## Button to swtich plot type
+    switchax = plt.axes([0.01, 0.95, 0.2, 0.03])
+    switchButton = Button(switchax, 'Change SLP Range')
+    # Fucntion
+    def switchPlots(event):
+        plt.close() # Close current plot
+        global lmf
+        lmf = lmf0 # reset the lmf
+        plot2() # open plot2
+    # Call
+    switchButton.on_clicked(switchPlots)
+    
+    # All set now show it
+    plt.show()
 
-# All set now show it
-plt.show()
+def plot2():
+    fig, ax = plt.subplots(figsize = (7, 7))
+    plt.subplots_adjust(left=0.25, bottom=0.25)
+    plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
+    plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
+    plt.title('Interactive RD Plot', fontsize = 20)
+    plt.axis([-6000, 6000, 10, 60])
+    axcolor = 'lightgrey'
+    
+    # Initial plotted data
+    offset1 = linspace(-450, 450, 24) # 150 Hz x 3
+    offset2 = linspace(-1500, 1500, 24) # 500 Hz x 3
+    offset3 = linspace(-3000, 3000, 24) # 1000 Hz x 3
+    offset4 = linspace(-6000, 6000, 24) # 2000 Hz x 3
+    l1, = plt.plot(offset1, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset1, 150), lw = 0, marker = 'o', color = 'C0', label = '150 Hz')
+    l2, = plt.plot(offset2, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset2, 500), lw = 0, marker = 'o', color = 'C1', label = '500 Hz')
+    l3, = plt.plot(offset3, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset3, 1000), lw = 0, marker = 'o', color = 'C2', label = '1000 Hz')
+    l4, = plt.plot(offset4, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset4, 2000), lw = 0, marker = 'o', color = 'C3', label = '2000 Hz')
+    plt.legend()
+    
+    def update_yValues(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0):
+        # When updating, call this function rather then all four individual
+        l1.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset1, 150))
+        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset2, 500))
+        l3.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset3, 1000))
+        l4.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset4, 2000))
+    
+    ## Update the y-data values when sliders are changed
+    slider_pB, slider_pC, slider_dwB, \
+        slider_dwC, slider_R2b, slider_R2c, \
+        slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
+    def update(val):
+        pB = slider_pB.val 
+        pC = slider_pC.val
+        dwB = slider_dwB.val 
+        dwC = slider_dwC.val 
+        R2b = slider_R2b.val
+        R2c = slider_R2c.val
+        kexAB = slider_kexAB.val 
+        kexAC = slider_kexAC.val 
+        kexBC = slider_kexBC.val 
+        update_yValues(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c)
+        fig.canvas.draw_idle()
+    # Update profile when a slider is changed
+    slider_pB.on_changed(update)
+    slider_pC.on_changed(update)
+    slider_dwB.on_changed(update)
+    slider_dwC.on_changed(update)
+    slider_R2b.on_changed(update)
+    slider_R2c.on_changed(update)
+    slider_kexAB.on_changed(update)
+    slider_kexAC.on_changed(update)
+    slider_kexBC.on_changed(update)
+
+
+    ## RadioButtons to switch atom type
+    type_ax = plt.axes([0.01, 0.3, 0.15, 0.1])
+    atomtypeButton = RadioButtons(type_ax, ('Carbon', 'Nitrogen'))
+    def changelmf(label):
+        get_lmf(label)
+        pB = slider_pB.val 
+        pC = slider_pC.val
+        dwB = slider_dwB.val 
+        dwC = slider_dwC.val 
+        R2b = slider_R2b.val
+        R2c = slider_R2c.val
+        kexAB = slider_kexAB.val 
+        kexAC = slider_kexAC.val 
+        kexBC = slider_kexBC.val
+        update_yValues(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c)
+        plt.draw()
+    atomtypeButton.on_clicked(changelmf)
+
+    ## RadioButtons to switch B0
+    Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
+    FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
+    def changeField(label):
+        FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
+        global Field
+        Field = FieldDict[label]
+        changelmf(atomtypeButton.value_selected)
+    FieldRadio.on_clicked(changeField)
+
+    ## Slider to adjust x-axis
+    ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
+    slider_axis = Slider(ax_axis, 'x-axis lim', 15, 300, valinit = 40)
+    def update_axis(val):
+        ax.axis([-6000, 6000, 10, val])
+    slider_axis.on_changed(update_axis)
+
+    ## Reset Button
+    resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
+    button = Button(resetax, 'Reset')
+    def reset(event):
+        slider_pB.reset()
+        slider_pC.reset()
+        slider_dwB.reset()
+        slider_dwC.reset()
+        slider_R2b.reset()
+        slider_R2c.reset()
+        slider_kexAB.reset()
+        slider_kexAC.reset()
+        slider_kexBC.reset()
+        slider_axis.reset()
+        update_yValues(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0)
+        plt.draw()
+    button.on_clicked(reset)
+
+    ## Button to swtich plot type
+    switchax = plt.axes([0.01, 0.95, 0.2, 0.03])
+    switchButton = Button(switchax, 'Change SLP Range')
+    def switchPlots(event):
+        plt.close()
+        global lmf
+        lmf = lmf0
+        plot1()
+    switchButton.on_clicked(switchPlots)
+    
+    # All set now show it
+    plt.show()
+
+plot1() 

@@ -12,7 +12,7 @@ pB0 = .02
 wA0, wB0 = 0, 3
 kexAB0 = 1000
 R1a0 = R1b0 = 2
-R2a0, R2b0 = 20, 20
+R2a0, R2b0 = 22.5, 22.5
 lmf = 150.784627  # 1H for 700MHz spectrometer
 aq = 1.0
 N = 1024 * 4
@@ -65,15 +65,15 @@ ax.set_title(text)
 
 # Initallize Sliders
 axcolor = 'lightgrey'
-ax_pB = plt.axes([0.18, 0.15, 0.3, 0.015], facecolor=axcolor)
-ax_wA = plt.axes([0.18, 0.13, 0.3, 0.015], facecolor=axcolor)
-ax_wB = plt.axes([0.18, 0.11, 0.3, 0.015], facecolor=axcolor)
+ax_pB = plt.axes([0.16, 0.15, 0.3, 0.015], facecolor=axcolor)
+ax_wA = plt.axes([0.16, 0.13, 0.3, 0.015], facecolor=axcolor)
+ax_wB = plt.axes([0.16, 0.11, 0.3, 0.015], facecolor=axcolor)
 ax_R2a = plt.axes([0.60, 0.13, 0.3, 0.015], facecolor = axcolor)
 ax_R2b = plt.axes([0.60, 0.11, 0.3, 0.015], facecolor = axcolor)
 ax_kexAB = plt.axes([0.60, 0.15, 0.3, 0.015], facecolor=axcolor)
 
 # Set slider ID and values
-slider_pB = Slider(ax_pB, 'p$_B$', .01, .5, valinit = pB0)
+slider_pB = Slider(ax_pB, 'p$_B$', .00, .5, valfmt = '%.3f', valinit = pB0)
 slider_wA = Slider(ax_wA, '$\omega$$_A$', -10, 10, valinit = wA0)
 slider_wB = Slider(ax_wB, '$\omega$$_B$', -10, 10, valinit = wB0)
 slider_R2a = Slider(ax_R2a, 'R$_{2a}$', 0, 50, valinit = R2a0)
