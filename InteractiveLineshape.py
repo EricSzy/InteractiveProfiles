@@ -8,9 +8,9 @@ plt.subplots_adjust(left=0.25, bottom=0.25)
 plt.ylabel('Intensity', fontsize = 16)
 plt.xlabel(r'$\omega\,(ppm)$', fontsize=16)
 
-pB0 = .02
+pB0 = .1
 wA0, wB0 = 0, 3
-kexAB0 = 1000
+kexAB0 = 2800
 R1a0 = R1b0 = 2
 R2a0, R2b0 = 22.5, 22.5
 lmf = 150.784627  # 1H for 700MHz spectrometer
@@ -117,5 +117,5 @@ def changelmf(label):
     plt.draw()
 
 radio.on_clicked(changelmf)
-
+plt.savefig('temp.pdf')
 plt.show()

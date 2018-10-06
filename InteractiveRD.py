@@ -5,8 +5,16 @@ from numpy import pi, shape, sin, tan, vstack, zeros
 from numpy import apply_along_axis
 from numpy.linalg import eig, inv, norm
 from scipy.optimize import curve_fit
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
+
+import sys
+if sys.version_info[0] < 3:
+    import Tkinter as Tk
+else:
+    import tkinter as Tk
 
 # Setting Some Inital Values
 Field = 600
@@ -20,6 +28,13 @@ R2a0 = R2b0 = R2c0 = 20
 # Functions for the calculation of the Bloch equations.
 def ExpDecay(x,a,b):
     return a*exp(-b*x)
+
+def isnumber(num):
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
 
 def MatrixBM3(k12,k21,k13,k31,k23,k32,delta1,delta2,delta3,
               w1, R1, R2, R1b, R1c, R2b, R2c):
@@ -264,6 +279,7 @@ def plot1():
     slider_pB, slider_pC, slider_dwB, \
         slider_dwC, slider_R2b, slider_R2c, \
         slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
+    
     # Function to update y-data when slider changed
     def update(val):
         pB = slider_pB.val 
@@ -388,6 +404,80 @@ def plot1():
         plt.draw()
     # Call
     button.on_clicked(reset)
+    
+    ## Button to start custom entry GUI
+    customax = plt.axes([0.01, 0.90, 0.2, 0.03])
+    GuiButton = Button(customax, 'Define Values')
+    # Fucntion
+    def init_custom(event):
+        def custom_update():
+            if isnumber(pB_u.get()) == True:
+                if float(pB_u.get()) < 1 and float(pB_u.get()) >= 0:
+                    slider_pB.set_val(float(pB_u.get()))
+            if isnumber(pC_u.get()) == True:
+                if float(pC_u.get()) < 1 and float(pC_u.get()) >= 0:
+                    slider_pC.set_val(float(pC_u.get()))
+            if isnumber(dwB_u.get()) == True:
+                if float(dwB_u.get()) < 80 and float(dwB_u.get()) > -80:
+                    slider_dwB.set_val(float(dwB_u.get()))
+            if isnumber(dwC_u.get()) == True:
+                if float(dwC_u.get()) < 80 and float(dwC_u.get()) > -80:
+                    slider_dwC.set_val(float(dwC_u.get()))
+            if isnumber(R2b_u.get()) == True:
+                if float(R2b_u.get()) >= 0:
+                    slider_R2b.set_val(float(R2b_u.get()))
+            if isnumber(R2c_u.get()) == True:
+                if float(R2c_u.get()) >= 0:
+                    slider_R2c.set_val(float(R2c_u.get()))
+            if isnumber(kexAB_u.get()) == True:
+                if float(kexAB_u.get()) >= 0:
+                    slider_kexAB.set_val(float(kexAB_u.get()))
+            if isnumber(kexAC_u.get()) == True:
+                if float(kexAC_u.get()) >= 0:
+                    slider_kexAC.set_val(float(kexAC_u.get()))
+            if isnumber(kexBC_u.get()) == True:
+                if float(kexBC_u.get()) >= 0:    
+                    slider_kexBC.set_val(float(kexBC_u.get()))
+
+        global Variables
+        Variables = Tk.Tk()
+        Variables.wm_title('User Variable Entry')
+        Tk.Label(Variables, text="pB").grid(row=0, column = 0)
+        Tk.Label(Variables, text="pC").grid(row=0, column = 2)
+        Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
+        Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
+        Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
+        Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
+
+        Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
+        Tk.Label(Variables, text="kexAC").grid(row=3, column = 2)
+        Tk.Label(Variables, text="kexBC").grid(row=4, column = 0)
+
+        pB_u = Tk.Entry(Variables)
+        pC_u = Tk.Entry(Variables)
+        dwB_u = Tk.Entry(Variables)
+        dwC_u = Tk.Entry(Variables)
+        R2b_u = Tk.Entry(Variables)
+        R2c_u = Tk.Entry(Variables)
+        kexAB_u = Tk.Entry(Variables)
+        kexAC_u = Tk.Entry(Variables)
+        kexBC_u = Tk.Entry(Variables)
+
+        pB_u.grid(row = 0, column = 1)
+        pC_u.grid(row = 0, column = 3)
+        dwB_u.grid(row = 1, column = 1)
+        dwC_u.grid(row = 1, column = 3)
+        R2b_u.grid(row = 2, column = 1)
+        R2c_u.grid(row = 2, column = 3)
+        kexAB_u.grid(row = 3, column = 1)
+        kexAC_u.grid(row = 3, column = 3)
+        kexBC_u.grid(row = 4, column = 1)
+
+        Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
+    
+    #Call on button click
+    GuiButton.on_clicked(init_custom)
+    
 
     ## Button to swtich plot type
     switchax = plt.axes([0.01, 0.95, 0.2, 0.03])
@@ -395,12 +485,17 @@ def plot1():
     # Fucntion
     def switchPlots(event):
         plt.close() # Close current plot
+        try:
+            Variables.destroy()
+        except:
+            pass
         global lmf
         lmf = lmf0 # reset the lmf
         plot2() # open plot2
+        # close custom window if open
     # Call
     switchButton.on_clicked(switchPlots)
-    
+
     # All set now show it
     plt.show()
 
@@ -512,16 +607,93 @@ def plot2():
         plt.draw()
     button.on_clicked(reset)
 
+
+        ## Button to start custom entry GUI
+    customax = plt.axes([0.01, 0.90, 0.2, 0.03])
+    GuiButton = Button(customax, 'Define Values')
+    # Fucntion
+    def init_custom(event):
+        def custom_update():
+            if isnumber(pB_u.get()) == True:
+                if float(pB_u.get()) < 1 and float(pB_u.get()) >= 0:
+                    slider_pB.set_val(float(pB_u.get()))
+            if isnumber(pC_u.get()) == True:
+                if float(pC_u.get()) < 1 and float(pC_u.get()) >= 0:
+                    slider_pC.set_val(float(pC_u.get()))
+            if isnumber(dwB_u.get()) == True:
+                if float(dwB_u.get()) < 80 and float(dwB_u.get()) > -80:
+                    slider_dwB.set_val(float(dwB_u.get()))
+            if isnumber(dwC_u.get()) == True:
+                if float(dwC_u.get()) < 80 and float(dwC_u.get()) > -80:
+                    slider_dwC.set_val(float(dwC_u.get()))
+            if isnumber(R2b_u.get()) == True:
+                if float(R2b_u.get()) >= 0:
+                    slider_R2b.set_val(float(R2b_u.get()))
+            if isnumber(R2c_u.get()) == True:
+                if float(R2c_u.get()) >= 0:
+                    slider_R2c.set_val(float(R2c_u.get()))
+            if isnumber(kexAB_u.get()) == True:
+                if float(kexAB_u.get()) >= 0:
+                    slider_kexAB.set_val(float(kexAB_u.get()))
+            if isnumber(kexAC_u.get()) == True:
+                if float(kexAC_u.get()) >= 0:
+                    slider_kexAC.set_val(float(kexAC_u.get()))
+            if isnumber(kexBC_u.get()) == True:
+                if float(kexBC_u.get()) >= 0:    
+                    slider_kexBC.set_val(float(kexBC_u.get()))
+
+        global Variables
+        Variables = Tk.Tk()
+        Variables.wm_title('User Variable Entry')
+        Tk.Label(Variables, text="pB").grid(row=0, column = 0)
+        Tk.Label(Variables, text="pC").grid(row=0, column = 2)
+        Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
+        Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
+        Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
+        Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
+
+        Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
+        Tk.Label(Variables, text="kexAC").grid(row=3, column = 2)
+        Tk.Label(Variables, text="kexBC").grid(row=4, column = 0)
+
+        pB_u = Tk.Entry(Variables)
+        pC_u = Tk.Entry(Variables)
+        dwB_u = Tk.Entry(Variables)
+        dwC_u = Tk.Entry(Variables)
+        R2b_u = Tk.Entry(Variables)
+        R2c_u = Tk.Entry(Variables)
+        kexAB_u = Tk.Entry(Variables)
+        kexAC_u = Tk.Entry(Variables)
+        kexBC_u = Tk.Entry(Variables)
+
+        pB_u.grid(row = 0, column = 1)
+        pC_u.grid(row = 0, column = 3)
+        dwB_u.grid(row = 1, column = 1)
+        dwC_u.grid(row = 1, column = 3)
+        R2b_u.grid(row = 2, column = 1)
+        R2c_u.grid(row = 2, column = 3)
+        kexAB_u.grid(row = 3, column = 1)
+        kexAC_u.grid(row = 3, column = 3)
+        kexBC_u.grid(row = 4, column = 1)
+
+        Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
+    
+    #Call on button click
+    GuiButton.on_clicked(init_custom)
+
     ## Button to swtich plot type
     switchax = plt.axes([0.01, 0.95, 0.2, 0.03])
     switchButton = Button(switchax, 'Change SLP Range')
     def switchPlots(event):
-        plt.close()
+        plt.close() # Close current plot
+        try:
+            Variables.destroy()
+        except:
+            pass
         global lmf
-        lmf = lmf0
+        lmf = lmf0 # reset the lmf
         plot1()
     switchButton.on_clicked(switchPlots)
-    
     # All set now show it
     plt.show()
 
