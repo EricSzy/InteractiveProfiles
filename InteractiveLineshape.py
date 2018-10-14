@@ -1,7 +1,14 @@
 from numpy import arange, argmax, array, diag, dot, exp, linalg, linspace, pi, zeros
 from nmrglue import proc_base
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
+import sys
+if sys.version_info[0] < 3:
+    import Tkinter as Tk
+else:
+    import tkinter as Tk
 
 fig, ax = plt.subplots(figsize = (7, 7))
 plt.subplots_adjust(left=0.25, bottom=0.25)
@@ -19,6 +26,13 @@ N = 1024 * 4
 T = linspace(0., aq, N)
 dt = aq / N
 xf = arange(-1./(2*dt), 1./(2*dt), 1./dt/N)/lmf
+
+def isnumber(num):
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
 
 def setplot(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b):
     new_y = data(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b)
@@ -100,6 +114,52 @@ slider_kexAB.on_changed(update)
 rax = plt.axes([0.01, 0.35, 0.15, 0.1])
 radio = RadioButtons(rax, ('Carbon', 'Nitrogen', 'Proton'))
 
+def init_custom(event):
+    def custom_update():
+        if isnumber(pB_u.get()) == True and float(pB_u.get()) < 1 and float(pB_u.get()) >= 0:
+            slider_pB.set_val(float(pB_u.get()))
+        if isnumber(wA_u.get()) == True and float(wA_u.get()) < 80 and float(wA_u.get()) > -80:
+            slider_wA.set_val(float(wA_u.get()))
+        if isnumber(wB_u.get()) == True and float(wB_u.get()) < 80 and float(wB_u.get()) > -80:
+            slider_wB.set_val(float(wB_u.get()))
+        if isnumber(R2a_u.get()) == True and float(R2a_u.get()) >= 0:
+            slider_R2a.set_val(float(R2a_u.get()))
+        if isnumber(R2b_u.get()) == True and float(R2b_u.get()) >= 0:
+            slider_R2b.set_val(float(R2b_u.get()))
+        if isnumber(kexAB_u.get()) == True and float(kexAB_u.get()) >= 0:
+            slider_kexAB.set_val(float(kexAB_u.get()))
+
+    global Variables
+    Variables = Tk.Tk()
+    Variables.wm_title('User Variable Entry')
+    Tk.Label(Variables, text="pB").grid(row=0, column = 0)
+    Tk.Label(Variables, text="wA").grid(row=1, column = 0)
+    Tk.Label(Variables, text="wB").grid(row=1, column = 2)
+    Tk.Label(Variables, text="R2a").grid(row=2, column = 0)
+    Tk.Label(Variables, text="R2b").grid(row=2, column = 2)
+    Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
+
+    pB_u = Tk.Entry(Variables)
+    wA_u = Tk.Entry(Variables)
+    wB_u = Tk.Entry(Variables)
+    R2a_u = Tk.Entry(Variables)
+    R2b_u = Tk.Entry(Variables)
+    kexAB_u = Tk.Entry(Variables)
+
+    pB_u.grid(row = 0, column = 1)
+    wA_u.grid(row = 1, column = 1)
+    wB_u.grid(row = 1, column = 3)
+    R2a_u.grid(row = 2, column = 1)
+    R2b_u.grid(row = 2, column = 3)
+    kexAB_u.grid(row = 3, column = 1)
+
+    Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
+
+customax = plt.axes([0.01, 0.9, 0.17, 0.055])
+GuiButton = Button(customax, 'User Defined\nSlider Values')
+#Call on button click
+GuiButton.on_clicked(init_custom)
+
 # RadioButtons for lmf
 def changelmf(label):
     lmfdict = {'Carbon':150.784627, 'Nitrogen':60.76302, 'Proton':600}
@@ -117,5 +177,4 @@ def changelmf(label):
     plt.draw()
 
 radio.on_clicked(changelmf)
-plt.savefig('temp.pdf')
 plt.show()

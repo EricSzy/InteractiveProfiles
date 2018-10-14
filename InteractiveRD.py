@@ -153,7 +153,7 @@ def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
         uOmega2 = uOmega1 + dwB # (rad/sec)
         uOmega3 = uOmega1 + dwC # (rad/sec)
         uOmegaAvg = pA*uOmega1 + pB*uOmega2 + pC*uOmega3 #Average Resonance Offset (rad/sec)
-                                                           # Given as uOmega-bar = sum(i=1, N)[ p_i + uOmega_i)
+
         delta1 = (uOmega1 - wrf) # rad/s
         delta2 = (uOmega2 - wrf) # rad/s
         delta3 = (uOmega3 - wrf) # rad/s
@@ -260,441 +260,225 @@ def get_lmf(label):
     global lmf
     lmf = lmfdict[label]
 
-def plot1():    
-    fig, ax = plt.subplots(figsize = (7, 7))
-    plt.subplots_adjust(left=0.25, bottom=0.25)
-    plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
-    plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
-    plt.title('Interactive RD Plot', fontsize = 20)
-    plt.axis([-3000, 3000, 10, 60])
-    axcolor = 'lightgrey'
+def init_custom(event):
+    def custom_update():
+        if isnumber(pB_u.get()) == True and float(pB_u.get()) < 1 and float(pB_u.get()) >= 0:
+            slider_pB.set_val(float(pB_u.get()))
+        if isnumber(pC_u.get()) == True and float(pC_u.get()) < 1 and float(pC_u.get()) >= 0:
+            slider_pC.set_val(float(pC_u.get()))
+        if isnumber(dwB_u.get()) == True and float(dwB_u.get()) < 80 and float(dwB_u.get()) > -80:
+            slider_dwB.set_val(float(dwB_u.get()))
+        if isnumber(dwC_u.get()) == True and float(dwC_u.get()) < 80 and float(dwC_u.get()) > -80:
+            slider_dwC.set_val(float(dwC_u.get()))
+        if isnumber(R2b_u.get()) == True and float(R2b_u.get()) >= 0:
+            slider_R2b.set_val(float(R2b_u.get()))
+        if isnumber(R2c_u.get()) == True and float(R2c_u.get()) >= 0:
+            slider_R2c.set_val(float(R2c_u.get()))
+        if isnumber(kexAB_u.get()) == True and float(kexAB_u.get()) >= 0:
+            slider_kexAB.set_val(float(kexAB_u.get()))
+        if isnumber(kexAC_u.get()) == True and float(kexAC_u.get()) >= 0:
+            slider_kexAC.set_val(float(kexAC_u.get()))
+        if isnumber(kexBC_u.get()) == True and float(kexBC_u.get()) >= 0:    
+            slider_kexBC.set_val(float(kexBC_u.get()))
+
+    global Variables
+    Variables = Tk.Tk()
+    Variables.wm_title('User Variable Entry')
+    Tk.Label(Variables, text="pB").grid(row=0, column = 0)
+    Tk.Label(Variables, text="pC").grid(row=0, column = 2)
+    Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
+    Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
+    Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
+    Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
+
+    Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
+    Tk.Label(Variables, text="kexAC").grid(row=3, column = 2)
+    Tk.Label(Variables, text="kexBC").grid(row=4, column = 0)
+
+    pB_u = Tk.Entry(Variables)
+    pC_u = Tk.Entry(Variables)
+    dwB_u = Tk.Entry(Variables)
+    dwC_u = Tk.Entry(Variables)
+    R2b_u = Tk.Entry(Variables)
+    R2c_u = Tk.Entry(Variables)
+    kexAB_u = Tk.Entry(Variables)
+    kexAC_u = Tk.Entry(Variables)
+    kexBC_u = Tk.Entry(Variables)
+
+    pB_u.grid(row = 0, column = 1)
+    pC_u.grid(row = 0, column = 3)
+    dwB_u.grid(row = 1, column = 1)
+    dwC_u.grid(row = 1, column = 3)
+    R2b_u.grid(row = 2, column = 1)
+    R2c_u.grid(row = 2, column = 3)
+    kexAB_u.grid(row = 3, column = 1)
+    kexAC_u.grid(row = 3, column = 3)
+    kexBC_u.grid(row = 4, column = 1)
+
+    Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
+
+def redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset):
+    if slps.get_status()[0] == True:
+        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 100))
+    if slps.get_status()[1] == True:
+        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
+    if slps.get_status()[2] == True: 
+        l3.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
+    if slps.get_status()[3] == True:
+        l4.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 2000))
+    fig.canvas.draw_idle()
+
+fig, ax = plt.subplots(figsize = (7, 7))
+plt.subplots_adjust(left=0.25, bottom=0.25)
+plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
+plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
+plt.title('Interactive RD Plot', fontsize = 20)
+plt.axis([-3000, 3000, 10, 60])
+axcolor = 'lightgrey'
     
-    # Initial plotted data
-    offset = linspace(-3000, 3000, 50)
-    l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C0')
-    l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C3')
+# Initial plotted data
+offset = linspace(-3000, 3000, 50)
+l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 100), lw = 0, marker = 'o', color = 'C0')
+l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C2')
+l3, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C1')
+l4, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 2000), lw = 0, marker = 'o', color = 'C3')
 
     ## Update the y-data values when sliders are changed
     # Set Sliders
-    slider_pB, slider_pC, slider_dwB, \
-        slider_dwC, slider_R2b, slider_R2c, \
-        slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
+slider_pB, slider_pC, slider_dwB, \
+    slider_dwC, slider_R2b, slider_R2c, \
+    slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
     
     # Function to update y-data when slider changed
-    def update(val):
-        pB = slider_pB.val 
-        pC = slider_pC.val
-        dwB = slider_dwB.val 
-        dwC = slider_dwC.val 
-        R2b = slider_R2b.val
-        R2c = slider_R2c.val
-        kexAB = slider_kexAB.val 
-        kexAC = slider_kexAC.val 
-        kexBC = slider_kexBC.val 
-        if slps.get_status()[0] == True: # These check status of check boxes to see if visable and should be plotted
-            l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
-        if slps.get_status()[1] == True:
-            l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
-        fig.canvas.draw_idle()
-    # Update profile when a slider is changed
-    slider_pB.on_changed(update)
-    slider_pC.on_changed(update)
-    slider_dwB.on_changed(update)
-    slider_dwC.on_changed(update)
-    slider_R2b.on_changed(update)
-    slider_R2c.on_changed(update)
-    slider_kexAB.on_changed(update)
-    slider_kexAC.on_changed(update)
-    slider_kexBC.on_changed(update)
+def update(val):
+    pB = slider_pB.val 
+    pC = slider_pC.val
+    dwB = slider_dwB.val 
+    dwC = slider_dwC.val 
+    R2b = slider_R2b.val
+    R2c = slider_R2c.val
+    kexAB = slider_kexAB.val 
+    kexAC = slider_kexAC.val 
+    kexBC = slider_kexBC.val
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset) 
 
-    ## CheckButtons for turning SLP on/off
-    # Make the Check Button axes
-    lines = [l, l2]
-    vis_ax = plt.axes([0.01, 0.2, 0.15, 0.1])
-    labels = (['500 Hz', '1000 Hz'])
-    visibility = [line.get_visible() for line in lines]
-    slps = CheckButtons(vis_ax, labels, visibility)
-    # Function when check buttons changed
-    def show_slps(label):
-        index = labels.index(label)
-        lines[index].set_visible(not lines[index].get_visible())
-        pB = slider_pB.val 
-        pC = slider_pC.val
-        dwB = slider_dwB.val 
-        dwC = slider_dwC.val 
-        R2b = slider_R2b.val
-        R2c = slider_R2c.val
-        kexAB = slider_kexAB.val 
-        kexAC = slider_kexAC.val 
-        kexBC = slider_kexBC.val
-        if slps.get_status()[0] == True:
-            l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
-        if slps.get_status()[1] == True:
-            l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
-        plt.draw()
-    # Call function on click
-    slps.on_clicked(show_slps)
+# Update profile when a slider is changed
+slider_pB.on_changed(update)
+slider_pC.on_changed(update)
+slider_dwB.on_changed(update)
+slider_dwC.on_changed(update)
+slider_R2b.on_changed(update)
+slider_R2c.on_changed(update)
+slider_kexAB.on_changed(update)
+slider_kexAC.on_changed(update)
+slider_kexBC.on_changed(update)
 
-    ## RadioButtons to switch atom type
-    # Make the RadioButton axes
-    type_ax = plt.axes([0.01, 0.3, 0.15, 0.1])
-    atomtypeButton = RadioButtons(type_ax, ('Carbon', 'Nitrogen'))
-    # Function
-    def changelmf(label):
-        get_lmf(label)
-        pB = slider_pB.val 
-        pC = slider_pC.val
-        dwB = slider_dwB.val 
-        dwC = slider_dwC.val 
-        R2b = slider_R2b.val
-        R2c = slider_R2c.val
-        kexAB = slider_kexAB.val 
-        kexAC = slider_kexAC.val 
-        kexBC = slider_kexBC.val
-        if slps.get_status()[0] == True:
-            l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
-        if slps.get_status()[1] == True:
-            l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
-        plt.draw()
-    # Execute on click
-    atomtypeButton.on_clicked(changelmf)
+## CheckButtons for turning SLP on/off
+# Make the Check Button axes
+lines = [l, l2, l3, l4]
+vis_ax = plt.axes([0.01, 0.2, 0.15, 0.1])
+labels = (['100 Hz', '500 Hz', '1000 Hz', '2000 Hz'])
+visibility = [line.get_visible() for line in lines]
+slps = CheckButtons(vis_ax, labels, visibility)
+# Function when check buttons changed
+def show_slps(label):
+    index = labels.index(label)
+    lines[index].set_visible(not lines[index].get_visible())
+    pB = slider_pB.val 
+    pC = slider_pC.val
+    dwB = slider_dwB.val 
+    dwC = slider_dwC.val 
+    R2b = slider_R2b.val
+    R2c = slider_R2c.val
+    kexAB = slider_kexAB.val 
+    kexAC = slider_kexAC.val 
+    kexBC = slider_kexBC.val
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset)
 
-    ## RadioButtons to switch B0
-    # Makes axes
-    Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
-    FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
-    # Function
-    def changeField(label):
-        FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
-        global Field
-        Field = FieldDict[label]
-        # Once the field is changes, update the lmf
-        changelmf(atomtypeButton.value_selected)
-    # Execute on click
-    FieldRadio.on_clicked(changeField)
+# Call function on click
+slps.on_clicked(show_slps)
 
-    ## Slider to adjust x-axis
-    # Make
-    ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
-    slider_axis = Slider(ax_axis, 'x-axis lim', 15, 300, valinit = 40)
-    # Function
-    def update_axis(val):
-        ax.axis([-3000, 3000, 10, val])
-    # Call on changed
-    slider_axis.on_changed(update_axis)
+## RadioButtons to switch atom type
+# Make the RadioButton axes
+type_ax = plt.axes([0.01, 0.3, 0.15, 0.1])
+atomtypeButton = RadioButtons(type_ax, ('Carbon', 'Nitrogen'))
+# Function
+def changelmf(label):
+    get_lmf(label)
+    pB = slider_pB.val 
+    pC = slider_pC.val
+    dwB = slider_dwB.val 
+    dwC = slider_dwC.val 
+    R2b = slider_R2b.val
+    R2c = slider_R2c.val
+    kexAB = slider_kexAB.val 
+    kexAC = slider_kexAC.val 
+    kexBC = slider_kexBC.val
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset)
 
-    ## Reset Button
-    # Make
-    resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
-    button = Button(resetax, 'Reset')
-    # Function
-    def reset(event):
-        slider_pB.reset()
-        slider_pC.reset()
-        slider_dwB.reset()
-        slider_dwC.reset()
-        slider_R2b.reset()
-        slider_R2c.reset()
-        slider_kexAB.reset()
-        slider_kexAC.reset()
-        slider_kexBC.reset()
-        slider_axis.reset()
-        l.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500))
-        l2.set_ydata(data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000))
-        plt.draw()
-    # Call
-    button.on_clicked(reset)
-    
-    ## Button to start custom entry GUI
-    customax = plt.axes([0.01, 0.90, 0.2, 0.03])
-    GuiButton = Button(customax, 'Define Values')
-    # Fucntion
-    def init_custom(event):
-        def custom_update():
-            if isnumber(pB_u.get()) == True:
-                if float(pB_u.get()) < 1 and float(pB_u.get()) >= 0:
-                    slider_pB.set_val(float(pB_u.get()))
-            if isnumber(pC_u.get()) == True:
-                if float(pC_u.get()) < 1 and float(pC_u.get()) >= 0:
-                    slider_pC.set_val(float(pC_u.get()))
-            if isnumber(dwB_u.get()) == True:
-                if float(dwB_u.get()) < 80 and float(dwB_u.get()) > -80:
-                    slider_dwB.set_val(float(dwB_u.get()))
-            if isnumber(dwC_u.get()) == True:
-                if float(dwC_u.get()) < 80 and float(dwC_u.get()) > -80:
-                    slider_dwC.set_val(float(dwC_u.get()))
-            if isnumber(R2b_u.get()) == True:
-                if float(R2b_u.get()) >= 0:
-                    slider_R2b.set_val(float(R2b_u.get()))
-            if isnumber(R2c_u.get()) == True:
-                if float(R2c_u.get()) >= 0:
-                    slider_R2c.set_val(float(R2c_u.get()))
-            if isnumber(kexAB_u.get()) == True:
-                if float(kexAB_u.get()) >= 0:
-                    slider_kexAB.set_val(float(kexAB_u.get()))
-            if isnumber(kexAC_u.get()) == True:
-                if float(kexAC_u.get()) >= 0:
-                    slider_kexAC.set_val(float(kexAC_u.get()))
-            if isnumber(kexBC_u.get()) == True:
-                if float(kexBC_u.get()) >= 0:    
-                    slider_kexBC.set_val(float(kexBC_u.get()))
+# Execute on click
+atomtypeButton.on_clicked(changelmf)
 
-        global Variables
-        Variables = Tk.Tk()
-        Variables.wm_title('User Variable Entry')
-        Tk.Label(Variables, text="pB").grid(row=0, column = 0)
-        Tk.Label(Variables, text="pC").grid(row=0, column = 2)
-        Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
-        Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
-        Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
-        Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
+## RadioButtons to switch B0
+# Makes axes
+Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
+FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
+# Function
+def changeField(label):
+    FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
+    global Field
+    Field = FieldDict[label]
+    # Once the field is changes, update the lmf
+    changelmf(atomtypeButton.value_selected)
+# Execute on click
+FieldRadio.on_clicked(changeField)
 
-        Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
-        Tk.Label(Variables, text="kexAC").grid(row=3, column = 2)
-        Tk.Label(Variables, text="kexBC").grid(row=4, column = 0)
+## Slider to adjust x-axis
+# Make
+ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
+slider_axis = Slider(ax_axis, 'x-axis lim', 15, 1000, valinit = 40)
+# Function
+def update_axis(val):
+    ax.axis([-3000, 3000, 10, val])
+# Call on changed
+slider_axis.on_changed(update_axis)
 
-        pB_u = Tk.Entry(Variables)
-        pC_u = Tk.Entry(Variables)
-        dwB_u = Tk.Entry(Variables)
-        dwC_u = Tk.Entry(Variables)
-        R2b_u = Tk.Entry(Variables)
-        R2c_u = Tk.Entry(Variables)
-        kexAB_u = Tk.Entry(Variables)
-        kexAC_u = Tk.Entry(Variables)
-        kexBC_u = Tk.Entry(Variables)
+## Reset Button
+# Make
+resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
+button = Button(resetax, 'Reset')
+# Function
+def reset(event):
+    slider_pB.reset()
+    slider_pC.reset()
+    slider_dwB.reset()
+    slider_dwC.reset()
+    slider_R2b.reset()
+    slider_R2c.reset()
+    slider_kexAB.reset()
+    slider_kexAC.reset()
+    slider_kexBC.reset()
+    slider_axis.reset()
+    redraw(lmf, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset)
 
-        pB_u.grid(row = 0, column = 1)
-        pC_u.grid(row = 0, column = 3)
-        dwB_u.grid(row = 1, column = 1)
-        dwC_u.grid(row = 1, column = 3)
-        R2b_u.grid(row = 2, column = 1)
-        R2c_u.grid(row = 2, column = 3)
-        kexAB_u.grid(row = 3, column = 1)
-        kexAC_u.grid(row = 3, column = 3)
-        kexBC_u.grid(row = 4, column = 1)
+# Call
+button.on_clicked(reset)
 
-        Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
-    
-    #Call on button click
-    GuiButton.on_clicked(init_custom)
-    
-
-    ## Button to swtich plot type
-    switchax = plt.axes([0.01, 0.95, 0.2, 0.03])
-    switchButton = Button(switchax, 'Change SLP Range')
-    # Fucntion
-    def switchPlots(event):
-        plt.close() # Close current plot
-        try:
-            Variables.destroy()
-        except:
-            pass
-        global lmf
-        lmf = lmf0 # reset the lmf
-        plot2() # open plot2
-        # close custom window if open
-    # Call
-    switchButton.on_clicked(switchPlots)
-
-    # All set now show it
-    plt.show()
-
-def plot2():
-    fig, ax = plt.subplots(figsize = (7, 7))
-    plt.subplots_adjust(left=0.25, bottom=0.25)
-    plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
-    plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
-    plt.title('Interactive RD Plot', fontsize = 20)
-    plt.axis([-6000, 6000, 10, 60])
-    axcolor = 'lightgrey'
-    
-    # Initial plotted data
-    offset1 = linspace(-450, 450, 24) # 150 Hz x 3
-    offset2 = linspace(-1500, 1500, 24) # 500 Hz x 3
-    offset3 = linspace(-3000, 3000, 24) # 1000 Hz x 3
-    offset4 = linspace(-6000, 6000, 24) # 2000 Hz x 3
-    l1, = plt.plot(offset1, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset1, 150), lw = 0, marker = 'o', color = 'C0', label = '150 Hz')
-    l2, = plt.plot(offset2, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset2, 500), lw = 0, marker = 'o', color = 'C1', label = '500 Hz')
-    l3, = plt.plot(offset3, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset3, 1000), lw = 0, marker = 'o', color = 'C2', label = '1000 Hz')
-    l4, = plt.plot(offset4, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset4, 2000), lw = 0, marker = 'o', color = 'C3', label = '2000 Hz')
-    plt.legend()
-    
-    def update_yValues(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0):
-        # When updating, call this function rather then all four individual
-        l1.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset1, 150))
-        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset2, 500))
-        l3.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset3, 1000))
-        l4.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset4, 2000))
-    
-    ## Update the y-data values when sliders are changed
-    slider_pB, slider_pC, slider_dwB, \
-        slider_dwC, slider_R2b, slider_R2c, \
-        slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
-    def update(val):
-        pB = slider_pB.val 
-        pC = slider_pC.val
-        dwB = slider_dwB.val 
-        dwC = slider_dwC.val 
-        R2b = slider_R2b.val
-        R2c = slider_R2c.val
-        kexAB = slider_kexAB.val 
-        kexAC = slider_kexAC.val 
-        kexBC = slider_kexBC.val 
-        update_yValues(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c)
-        fig.canvas.draw_idle()
-    # Update profile when a slider is changed
-    slider_pB.on_changed(update)
-    slider_pC.on_changed(update)
-    slider_dwB.on_changed(update)
-    slider_dwC.on_changed(update)
-    slider_R2b.on_changed(update)
-    slider_R2c.on_changed(update)
-    slider_kexAB.on_changed(update)
-    slider_kexAC.on_changed(update)
-    slider_kexBC.on_changed(update)
+## Button to start custom entry GUI
+customax = plt.axes([0.01, 0.86, 0.2, 0.055])
+GuiButton = Button(customax, 'Define\nSlider Values')
+#Call on button click
+GuiButton.on_clicked(init_custom)
 
 
-    ## RadioButtons to switch atom type
-    type_ax = plt.axes([0.01, 0.3, 0.15, 0.1])
-    atomtypeButton = RadioButtons(type_ax, ('Carbon', 'Nitrogen'))
-    def changelmf(label):
-        get_lmf(label)
-        pB = slider_pB.val 
-        pC = slider_pC.val
-        dwB = slider_dwB.val 
-        dwC = slider_dwC.val 
-        R2b = slider_R2b.val
-        R2c = slider_R2c.val
-        kexAB = slider_kexAB.val 
-        kexAC = slider_kexAC.val 
-        kexBC = slider_kexBC.val
-        update_yValues(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c)
-        plt.draw()
-    atomtypeButton.on_clicked(changelmf)
+## Button to swtich plot type
+switchax = plt.axes([0.01, 0.92, 0.2, 0.055])
+switchButton = Button(switchax, 'Experimental\nOffset Ranges')
+# Fucntion
+def switchOffset(event):
+    pass
+# Call
+switchButton.on_clicked(switchOffset)
 
-    ## RadioButtons to switch B0
-    Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
-    FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
-    def changeField(label):
-        FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
-        global Field
-        Field = FieldDict[label]
-        changelmf(atomtypeButton.value_selected)
-    FieldRadio.on_clicked(changeField)
-
-    ## Slider to adjust x-axis
-    ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
-    slider_axis = Slider(ax_axis, 'x-axis lim', 15, 300, valinit = 40)
-    def update_axis(val):
-        ax.axis([-6000, 6000, 10, val])
-    slider_axis.on_changed(update_axis)
-
-    ## Reset Button
-    resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
-    button = Button(resetax, 'Reset')
-    def reset(event):
-        slider_pB.reset()
-        slider_pC.reset()
-        slider_dwB.reset()
-        slider_dwC.reset()
-        slider_R2b.reset()
-        slider_R2c.reset()
-        slider_kexAB.reset()
-        slider_kexAC.reset()
-        slider_kexBC.reset()
-        slider_axis.reset()
-        update_yValues(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0)
-        plt.draw()
-    button.on_clicked(reset)
-
-
-        ## Button to start custom entry GUI
-    customax = plt.axes([0.01, 0.90, 0.2, 0.03])
-    GuiButton = Button(customax, 'Define Values')
-    # Fucntion
-    def init_custom(event):
-        def custom_update():
-            if isnumber(pB_u.get()) == True:
-                if float(pB_u.get()) < 1 and float(pB_u.get()) >= 0:
-                    slider_pB.set_val(float(pB_u.get()))
-            if isnumber(pC_u.get()) == True:
-                if float(pC_u.get()) < 1 and float(pC_u.get()) >= 0:
-                    slider_pC.set_val(float(pC_u.get()))
-            if isnumber(dwB_u.get()) == True:
-                if float(dwB_u.get()) < 80 and float(dwB_u.get()) > -80:
-                    slider_dwB.set_val(float(dwB_u.get()))
-            if isnumber(dwC_u.get()) == True:
-                if float(dwC_u.get()) < 80 and float(dwC_u.get()) > -80:
-                    slider_dwC.set_val(float(dwC_u.get()))
-            if isnumber(R2b_u.get()) == True:
-                if float(R2b_u.get()) >= 0:
-                    slider_R2b.set_val(float(R2b_u.get()))
-            if isnumber(R2c_u.get()) == True:
-                if float(R2c_u.get()) >= 0:
-                    slider_R2c.set_val(float(R2c_u.get()))
-            if isnumber(kexAB_u.get()) == True:
-                if float(kexAB_u.get()) >= 0:
-                    slider_kexAB.set_val(float(kexAB_u.get()))
-            if isnumber(kexAC_u.get()) == True:
-                if float(kexAC_u.get()) >= 0:
-                    slider_kexAC.set_val(float(kexAC_u.get()))
-            if isnumber(kexBC_u.get()) == True:
-                if float(kexBC_u.get()) >= 0:    
-                    slider_kexBC.set_val(float(kexBC_u.get()))
-
-        global Variables
-        Variables = Tk.Tk()
-        Variables.wm_title('User Variable Entry')
-        Tk.Label(Variables, text="pB").grid(row=0, column = 0)
-        Tk.Label(Variables, text="pC").grid(row=0, column = 2)
-        Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
-        Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
-        Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
-        Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
-
-        Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
-        Tk.Label(Variables, text="kexAC").grid(row=3, column = 2)
-        Tk.Label(Variables, text="kexBC").grid(row=4, column = 0)
-
-        pB_u = Tk.Entry(Variables)
-        pC_u = Tk.Entry(Variables)
-        dwB_u = Tk.Entry(Variables)
-        dwC_u = Tk.Entry(Variables)
-        R2b_u = Tk.Entry(Variables)
-        R2c_u = Tk.Entry(Variables)
-        kexAB_u = Tk.Entry(Variables)
-        kexAC_u = Tk.Entry(Variables)
-        kexBC_u = Tk.Entry(Variables)
-
-        pB_u.grid(row = 0, column = 1)
-        pC_u.grid(row = 0, column = 3)
-        dwB_u.grid(row = 1, column = 1)
-        dwC_u.grid(row = 1, column = 3)
-        R2b_u.grid(row = 2, column = 1)
-        R2c_u.grid(row = 2, column = 3)
-        kexAB_u.grid(row = 3, column = 1)
-        kexAC_u.grid(row = 3, column = 3)
-        kexBC_u.grid(row = 4, column = 1)
-
-        Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
-    
-    #Call on button click
-    GuiButton.on_clicked(init_custom)
-
-    ## Button to swtich plot type
-    switchax = plt.axes([0.01, 0.95, 0.2, 0.03])
-    switchButton = Button(switchax, 'Change SLP Range')
-    def switchPlots(event):
-        plt.close() # Close current plot
-        try:
-            Variables.destroy()
-        except:
-            pass
-        global lmf
-        lmf = lmf0 # reset the lmf
-        plot1()
-    switchButton.on_clicked(switchPlots)
-    # All set now show it
-    plt.show()
-
-plot1() 
+# All set now show it
+plt.show()
