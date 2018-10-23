@@ -6,24 +6,29 @@ from numpy import apply_along_axis
 from numpy.linalg import eig, inv, norm
 from scipy.optimize import curve_fit
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('TkAgg') # Set Tk backend for matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, RadioButtons, Button
 
-import sys
-if sys.version_info[0] < 3:
+from warnings import simplefilter
+# Prevents divide by zero warnings from printing to user.
+simplefilter("ignore") 
+
+# Import tkinter for python 2 or 3; depedning on user system.
+from sys import version_info
+if version_info[0] < 3:
     import Tkinter as Tk
 else:
     import tkinter as Tk
 
 # Setting Some Inital Values
-Field = 600
-lmf = lmf0 = 150.870
-pB0, pC0 = .01, 0
-dwB0, dwC0 = 3, 0
-kexAB0, kexAC0, kexBC0 = 1000, 0, 0
-R1a0 = R1b0 = R1c0 = 2.5
-R2a0 = R2b0 = R2c0 = 20
+Field = 600 # B0 in Mhz.
+lmf = lmf0 = 150.870 # 13C larmor freq in 600 Mhz
+pB0, pC0 = .01, 0 # pB and pC populations as probabilities
+dwB0, dwC0 = 3, 0 # Chemical shifts in ppm
+kexAB0, kexAC0, kexBC0 = 1000, 0, 0 # Exchange rates
+R1a0 = R1b0 = R1c0 = 2.5 # R1 values
+R2a0 = R2b0 = R2c0 = 20 # R2 values
 
 # Functions for the calculation of the Bloch equations.
 def ExpDecay(x,a,b):
@@ -135,8 +140,7 @@ def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
         delta2 = (uOmega2 - wrf) # rad/s
         delta3 = (uOmega3 - wrf) # rad/s
         deltaAvg = (uOmega1 - wrf) # rad/s, avg delta is GS - carrier
-
-        thetaAvg = float(arctan(w1/deltaAvg)) # == arccot(deltaAvg/(w1*))
+        thetaAvg = float(arctan(w1/deltaAvg)) # == arccot(deltaAvg/(w1*2pi))
         theta1 = theta2 = theta3 = thetaAvg    
 
         ## GS,ES1,ES2 along average state
@@ -172,8 +176,11 @@ def AlignMagVec(w1, wrf, pA, pB, pC, dwB, dwC, kexAB, kexAC, kexBC):
             delta1, delta2, delta3, deltaAvg,
             theta1, theta2, theta3, thetaAvg)
 
-def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time):
+def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time, Flag = "OffRes"):
     # Function is applyed to an array of offset values in the data function, to calcuate an R2eff value. 
+    if Flag == 'OnRes': # Hacky way to switch the passed input variable from data functions ApplyAlongAxis call for the OnRes profile.
+        w1 = wrf
+        wrf = 0
     pA = 1 - (pB + pC)
     dwB = dwB * lmf * 2 * pi * -1
     dwC = dwC * lmf * 2 * pi * -1
@@ -210,28 +217,30 @@ def CalcR2eff(wrf, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c
     R2eff = (R1p/sin(thetaAvg)**2.) - (R1a/(tan(thetaAvg)**2.))
     return R2eff                   
 
-
-def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset, w1):
+def data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset, w1, Flag = 'OffRes'):
     # Takes in exchange parameters and calcuates R2eff values. 
     time = linspace(0, 0.2, 3) #Points are sacrificed for speed; may cause issues; should be okay since err = 0 
-    offset2pi = array(offset * 2 * pi)
-    offset2pi = vstack(offset2pi)
-    w1 = w1 * 2 * pi
-    return apply_along_axis(CalcR2eff, 1, offset2pi, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time)
-
+    if Flag == 'OffRes':   
+        w1 = w1 * 2 * pi
+        offset2pi = vstack(array(offset * 2 * pi))
+        return apply_along_axis(CalcR2eff, 1, offset2pi, w1, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time, Flag = 'OffRes')
+    elif Flag == 'OnRes':
+        offset2pi = 0
+        w1 = vstack(array(w1 * 2 * pi))
+        return apply_along_axis(CalcR2eff, 1, w1, offset2pi, lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, time, Flag = 'OnRes')
 # Function for setting shared plot sliders
 def initializeSliders():
     # Initialize sliders
     axcolor = 'lightgrey'
-    ax_pB = plt.axes([0.18, 0.15, 0.3, 0.015], facecolor=axcolor)
-    ax_pC = plt.axes([0.62, 0.15, 0.3, 0.015], facecolor=axcolor)
-    ax_dwB = plt.axes([0.18, 0.13, 0.3, 0.015], facecolor=axcolor)
-    ax_dwC = plt.axes([0.62, 0.13, 0.3, 0.015], facecolor=axcolor)
-    ax_R2b = plt.axes([0.18, 0.11, 0.3, 0.015], facecolor = axcolor)
-    ax_R2c = plt.axes([0.62, 0.11, 0.3, 0.015], facecolor = axcolor)
-    ax_kexAB = plt.axes([0.25, 0.07, 0.65, 0.015], facecolor=axcolor)
-    ax_kexAC = plt.axes([0.25, 0.05, 0.65, 0.015], facecolor=axcolor)
-    ax_kexBC = plt.axes([0.25, 0.03, 0.65, 0.015], facecolor=axcolor)
+    ax_pB = plt.axes([0.45, 0.15, 0.2, 0.015], facecolor=axcolor)
+    ax_pC = plt.axes([0.72, 0.15, 0.2, 0.015], facecolor=axcolor)
+    ax_dwB = plt.axes([0.45, 0.13, 0.2, 0.015], facecolor=axcolor)
+    ax_dwC = plt.axes([0.72, 0.13, 0.2, 0.015], facecolor=axcolor)
+    ax_R2b = plt.axes([0.45, 0.11, 0.2, 0.015], facecolor = axcolor)
+    ax_R2c = plt.axes([0.72, 0.11, 0.2, 0.015], facecolor = axcolor)
+    ax_kexAB = plt.axes([0.45, 0.07, 0.4, 0.015], facecolor=axcolor)
+    ax_kexAC = plt.axes([0.45, 0.05, 0.4, 0.015], facecolor=axcolor)
+    ax_kexBC = plt.axes([0.45, 0.03, 0.4, 0.015], facecolor=axcolor)
 
     # Set slider ID and values
     slider_pB = Slider(ax_pB, 'p$_B$', 0, .2, valfmt = '%.3f', valinit = pB0)
@@ -326,13 +335,16 @@ def redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R
         l3.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
     if slps.get_status()[3] == True:
         l4.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 2000))
+    lo1.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, 0, slp, Flag = 'OnRes'))
     fig.canvas.draw_idle()
 
-fig, ax = plt.subplots(figsize = (7, 7))
-plt.subplots_adjust(left=0.25, bottom=0.25)
-plt.xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
-plt.ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
-plt.title('Interactive RD Plot', fontsize = 20)
+#fig, ax = plt.subplots(figsize = (14, 7))
+fig = plt.figure(figsize = (12, 7))
+ax = fig.add_subplot(121)
+plt.subplots_adjust(bottom=0.25)
+ax.set_xlabel(r'$\Omega\,2\pi^{-1}\,{(Hz)}$', fontsize=16)
+ax.set_ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
+ax.set_title('Off-Res RD Plot', fontsize = 20)
 plt.axis([-3000, 3000, 10, 60])
 axcolor = 'lightgrey'
     
@@ -342,6 +354,16 @@ l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R
 l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C2')
 l3, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C1')
 l4, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 2000), lw = 0, marker = 'o', color = 'C3')
+
+ax2 = fig.add_subplot(122)
+#plt.subplots_adjust(left=0.25, bottom=0.25)
+ax2.set_xlabel(r'$\omega$$_1$(Hz)', fontsize=16)
+ax2.set_ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
+ax2.set_title('On-Res RD Plot ($\Omega$=0 Hz)', fontsize = 20)
+plt.axis([0, 3000, 10, 60])
+
+slp = linspace(50, 3000, 25)
+lo1, = ax2.plot(slp, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, 0, slp, Flag = 'OnRes'), lw = 0, marker = 'o', color = 'C0')
 
     ## Update the y-data values when sliders are changed
     # Set Sliders
@@ -376,7 +398,7 @@ slider_kexBC.on_changed(update)
 ## CheckButtons for turning SLP on/off
 # Make the Check Button axes
 lines = [l, l2, l3, l4]
-vis_ax = plt.axes([0.01, 0.2, 0.15, 0.1])
+vis_ax = plt.axes([0.01, 0.01, 0.1, 0.15])
 labels = (['100 Hz', '500 Hz', '1000 Hz', '2000 Hz'])
 visibility = [line.get_visible() for line in lines]
 slps = CheckButtons(vis_ax, labels, visibility)
@@ -400,7 +422,7 @@ slps.on_clicked(show_slps)
 
 ## RadioButtons to switch atom type
 # Make the RadioButton axes
-type_ax = plt.axes([0.01, 0.3, 0.15, 0.1])
+type_ax = plt.axes([0.11, 0.11, 0.1, 0.08])
 atomtypeButton = RadioButtons(type_ax, ('Carbon', 'Nitrogen'))
 # Function
 def changelmf(label):
@@ -421,7 +443,7 @@ atomtypeButton.on_clicked(changelmf)
 
 ## RadioButtons to switch B0
 # Makes axes
-Fieldax = plt.axes([0.01, 0.4, 0.15, 0.1])
+Fieldax = plt.axes([0.11, 0.01, 0.1, 0.1])
 FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
 # Function
 def changeField(label):
@@ -435,17 +457,18 @@ FieldRadio.on_clicked(changeField)
 
 ## Slider to adjust x-axis
 # Make
-ax_axis = plt.axes([0.25, 0.01, 0.65, 0.015], facecolor=axcolor)
+ax_axis = plt.axes([0.45, 0.01, 0.4, 0.015], facecolor=axcolor)
 slider_axis = Slider(ax_axis, 'x-axis lim', 15, 1000, valinit = 40)
 # Function
 def update_axis(val):
     ax.axis([-3000, 3000, 10, val])
+    ax2.axis([0, 3000, 10, val])
 # Call on changed
 slider_axis.on_changed(update_axis)
 
 ## Reset Button
 # Make
-resetax = plt.axes([0.01, 0.16, 0.07, 0.03])
+resetax = plt.axes([0.01, 0.16, 0.1, 0.03])
 button = Button(resetax, 'Reset')
 # Function
 def reset(event):
@@ -465,20 +488,10 @@ def reset(event):
 button.on_clicked(reset)
 
 ## Button to start custom entry GUI
-customax = plt.axes([0.01, 0.86, 0.2, 0.055])
-GuiButton = Button(customax, 'Define\nSlider Values')
-#Call on button click
-GuiButton.on_clicked(init_custom)
-
-
-## Button to swtich plot type
-switchax = plt.axes([0.01, 0.92, 0.2, 0.055])
-switchButton = Button(switchax, 'Experimental\nOffset Ranges')
-# Fucntion
-def switchOffset(event):
-    pass
+customax = plt.axes([0.22, 0.06, 0.15, 0.055])
+GuiButton = Button(customax, 'Define Custom\nSlider Values')
 # Call
-switchButton.on_clicked(switchOffset)
+GuiButton.on_clicked(init_custom)
 
 # All set now show it
 plt.show()
