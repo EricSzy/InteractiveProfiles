@@ -11,6 +11,6 @@ Dependnencies:
 * MatPlotLib
 * Tkinter
 
-'''bash
+```bash
 python ViewRD.py
-'''
+```
