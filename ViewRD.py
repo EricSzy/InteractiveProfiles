@@ -25,7 +25,7 @@ else:
 Field = 600 # B0 in Mhz.
 lmf = lmf0 = 150.870 # 13C larmor freq in 600 Mhz
 pB0, pC0 = .01, 0 # pB and pC populations as probabilities
-dwB0, dwC0 = 3, 0 # Chemical shifts in ppm
+dwB0, dwC0 = 3, 0 # Chemical shifts in ppmchr
 kexAB0, kexAC0, kexBC0 = 1000, 0, 0 # Exchange rates
 R1a0 = R1b0 = R1c0 = 2.5 # R1 values
 R2a0 = R2b0 = R2c0 = 20 # R2 values
@@ -236,8 +236,9 @@ def initializeSliders():
     ax_pC = plt.axes([0.72, 0.15, 0.2, 0.015], facecolor=axcolor)
     ax_dwB = plt.axes([0.45, 0.13, 0.2, 0.015], facecolor=axcolor)
     ax_dwC = plt.axes([0.72, 0.13, 0.2, 0.015], facecolor=axcolor)
-    ax_R2b = plt.axes([0.45, 0.11, 0.2, 0.015], facecolor = axcolor)
-    ax_R2c = plt.axes([0.72, 0.11, 0.2, 0.015], facecolor = axcolor)
+    ax_R2a = plt.axes([0.45, 0.11, 0.11, 0.015], facecolor = axcolor)
+    ax_R2b = plt.axes([0.625, 0.11, 0.11, 0.015], facecolor = axcolor)
+    ax_R2c = plt.axes([0.80, 0.11, 0.11, 0.015], facecolor = axcolor)
     ax_kexAB = plt.axes([0.45, 0.07, 0.4, 0.015], facecolor=axcolor)
     ax_kexAC = plt.axes([0.45, 0.05, 0.4, 0.015], facecolor=axcolor)
     ax_kexBC = plt.axes([0.45, 0.03, 0.4, 0.015], facecolor=axcolor)
@@ -247,6 +248,7 @@ def initializeSliders():
     slider_pC = Slider(ax_pC, 'p$_C$', 0, .2, valfmt = '%.3f', valinit = pC0)
     slider_dwB = Slider(ax_dwB, '$\Delta$$\omega$$_B$', -10, 10, valinit = dwB0)
     slider_dwC = Slider(ax_dwC, '$\Delta$$\omega$$_C$', -10, 10, valinit = dwC0)
+    slider_R2a = Slider(ax_R2a, 'R$_{2a}$', 0, 50, valinit = R2a0)
     slider_R2b = Slider(ax_R2b, 'R$_{2b}$', 0, 50, valinit = R2a0)
     slider_R2c = Slider(ax_R2c, 'R$_{2c}$', 0, 50, valinit = R2a0)
     slider_kexAB = Slider(ax_kexAB, 'k$_{ex}$AB (s$^{-1}$)', 0, 15000, valinit = kexAB0)
@@ -254,7 +256,7 @@ def initializeSliders():
     slider_kexBC = Slider(ax_kexBC, 'k$_{ex}$BC (s$^{-1}$)', 0, 15000, valinit = kexBC0)
     
     return slider_pB, slider_pC, slider_dwB,\
-        slider_dwC, slider_R2b, slider_R2c,\
+        slider_dwC, slider_R2a, slider_R2b, slider_R2c,\
         slider_kexAB, slider_kexAC, slider_kexBC
 
 def get_lmf(label):
@@ -289,6 +291,8 @@ def init_custom(event):
             slider_kexAC.set_val(float(kexAC_u.get()))
         if isnumber(kexBC_u.get()) == True and float(kexBC_u.get()) >= 0:    
             slider_kexBC.set_val(float(kexBC_u.get()))
+        if isnumber(R2a_u.get()) == True and float(R2a_u.get()) >= 0:    
+            R2a = (float(R2a_u.get()))
 
     global Variables
     Variables = Tk.Tk()
@@ -297,6 +301,7 @@ def init_custom(event):
     Tk.Label(Variables, text="pC").grid(row=0, column = 2)
     Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
     Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
+    Tk.Label(Variables, text="R2a").grid(row=4, column = 0)
     Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
     Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
 
@@ -308,6 +313,7 @@ def init_custom(event):
     pC_u = Tk.Entry(Variables)
     dwB_u = Tk.Entry(Variables)
     dwC_u = Tk.Entry(Variables)
+    R2a_u = Tk.Entry(Variables)
     R2b_u = Tk.Entry(Variables)
     R2c_u = Tk.Entry(Variables)
     kexAB_u = Tk.Entry(Variables)
@@ -323,19 +329,20 @@ def init_custom(event):
     kexAB_u.grid(row = 3, column = 1)
     kexAC_u.grid(row = 3, column = 3)
     kexBC_u.grid(row = 4, column = 1)
+    R2a_u.grid(row = 4, column = 3)
 
     Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
 
-def redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset):
+def redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c):
     if slps.get_status()[0] == True:
-        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 100))
+        l.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset1, 100))
     if slps.get_status()[1] == True:
-        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 500))
+        l2.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset2, 500))
     if slps.get_status()[2] == True: 
-        l3.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 1000))
+        l3.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset3, 1000))
     if slps.get_status()[3] == True:
-        l4.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset, 2000))
-    lo1.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, 0, slp, Flag = 'OnRes'))
+        l4.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, offset4, 2000))
+    lo1.set_ydata(data(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a, R1b, R1c, R2a, R2b, R2c, 0, slp, Flag = 'OnRes'))
     fig.canvas.draw_idle()
 
 #fig, ax = plt.subplots(figsize = (14, 7))
@@ -349,11 +356,14 @@ plt.axis([-3000, 3000, 10, 60])
 axcolor = 'lightgrey'
     
 # Initial plotted data
-offset = linspace(-3000, 3000, 50)
-l, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 100), lw = 0, marker = 'o', color = 'C0')
-l2, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 500), lw = 0, marker = 'o', color = 'C2')
-l3, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 1000), lw = 0, marker = 'o', color = 'C1')
-l4, = plt.plot(offset, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset, 2000), lw = 0, marker = 'o', color = 'C3')
+offset1 = linspace(-350, 350, 24)
+offset2 = linspace(-1750, 1750, 24)
+offset3 = linspace(-3500, 3500, 24)
+offset4 = linspace(-7000, 7000, 24)
+l, = plt.plot(offset1, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset1, 100), lw = 0, marker = 'o', color = 'C0')
+l2, = plt.plot(offset2, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset2, 500), lw = 0, marker = 'o', color = 'C2')
+l3, = plt.plot(offset3, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset3, 1000), lw = 0, marker = 'o', color = 'C1')
+l4, = plt.plot(offset4, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset4, 2000), lw = 0, marker = 'o', color = 'C3')
 
 ax2 = fig.add_subplot(122)
 #plt.subplots_adjust(left=0.25, bottom=0.25)
@@ -368,7 +378,7 @@ lo1, = ax2.plot(slp, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1
     ## Update the y-data values when sliders are changed
     # Set Sliders
 slider_pB, slider_pC, slider_dwB, \
-    slider_dwC, slider_R2b, slider_R2c, \
+    slider_dwC, slider_R2a, slider_R2b, slider_R2c, \
     slider_kexAB, slider_kexAC, slider_kexBC = initializeSliders()
     
     # Function to update y-data when slider changed
@@ -377,18 +387,20 @@ def update(val):
     pC = slider_pC.val
     dwB = slider_dwB.val 
     dwC = slider_dwC.val 
+    R2a = slider_R2a.val
     R2b = slider_R2b.val
     R2c = slider_R2c.val
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
-    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset) 
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c) 
 
 # Update profile when a slider is changed
 slider_pB.on_changed(update)
 slider_pC.on_changed(update)
 slider_dwB.on_changed(update)
 slider_dwC.on_changed(update)
+slider_R2a.on_changed(update)
 slider_R2b.on_changed(update)
 slider_R2c.on_changed(update)
 slider_kexAB.on_changed(update)
@@ -415,7 +427,7 @@ def show_slps(label):
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
-    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset)
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c, offset)
 
 # Call function on click
 slps.on_clicked(show_slps)
@@ -436,7 +448,7 @@ def changelmf(label):
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
-    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a0, R2b, R2c, offset)
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c, offset)
 
 # Execute on click
 atomtypeButton.on_clicked(changelmf)
@@ -476,13 +488,14 @@ def reset(event):
     slider_pC.reset()
     slider_dwB.reset()
     slider_dwC.reset()
+    slider_R2a.reset()
     slider_R2b.reset()
     slider_R2c.reset()
     slider_kexAB.reset()
     slider_kexAC.reset()
     slider_kexBC.reset()
     slider_axis.reset()
-    redraw(lmf, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, offset)
+    redraw(lmf, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0)
 
 # Call
 button.on_clicked(reset)
