@@ -5,12 +5,14 @@ This script generates an interactive simulated NMR relaxation diserpsion (R1rho)
 The purpose of this module is to allow the user to explore how changes in the 'ground state' and 'excited state' kinetics, thermodynamics, and topology will manifest experimentally. 
 
 Compatible with Python 2 & Python 3
+
 Dependnencies:
 * NumPy
 * SciPy
 * MatPlotLib
 * Tkinter
 
+Can be run via terminal from the containing folder:
 ```bash
-python ViewRD.py
+> python ViewRD.py
 ```
