@@ -264,10 +264,10 @@ def get_lmf(label):
         lmfdict = {'Carbon':150.870, 'Nitrogen':60.821}
     if Field == 700:
         lmfdict = {'Carbon':176.015, 'Nitrogen':70.957}
-    if Field == 800:
-        lmfdict = {'Carbon':201.160, 'Nitrogen':81.094}
     if Field == 1100:
         lmfdict = {'Carbon':276.595, 'Nitrogen':111.505}
+    if Field == 1200:
+        lmfdict = {'Carbon':301.74, 'Nitrogen':121.64}
     global lmf
     lmf = lmfdict[label]
 
@@ -281,6 +281,8 @@ def init_custom(event):
             slider_dwB.set_val(float(dwB_u.get()))
         if isnumber(dwC_u.get()) == True and float(dwC_u.get()) < 80 and float(dwC_u.get()) > -80:
             slider_dwC.set_val(float(dwC_u.get()))
+        if isnumber(R2a_u.get()) == True and float(R2a_u.get()) >= 0:
+            slider_R2a.set_val(float(R2a_u.get()))
         if isnumber(R2b_u.get()) == True and float(R2b_u.get()) >= 0:
             slider_R2b.set_val(float(R2b_u.get()))
         if isnumber(R2c_u.get()) == True and float(R2c_u.get()) >= 0:
@@ -301,13 +303,13 @@ def init_custom(event):
     Tk.Label(Variables, text="pC").grid(row=0, column = 2)
     Tk.Label(Variables, text="dwB").grid(row=1, column = 0)
     Tk.Label(Variables, text="dwC").grid(row=1, column = 2)
-    Tk.Label(Variables, text="R2a").grid(row=4, column = 0)
-    Tk.Label(Variables, text="R2b").grid(row=2, column = 0)
-    Tk.Label(Variables, text="R2c").grid(row=2, column = 2)
+    Tk.Label(Variables, text="R2a").grid(row=3, column = 2)
+    Tk.Label(Variables, text="R2b").grid(row=4, column = 0)
+    Tk.Label(Variables, text="R2c").grid(row=4, column = 2)
 
-    Tk.Label(Variables, text="kexAB").grid(row=3, column = 0)
-    Tk.Label(Variables, text="kexAC").grid(row=3, column = 2)
-    Tk.Label(Variables, text="kexBC").grid(row=4, column = 0)
+    Tk.Label(Variables, text="kexAB").grid(row=2, column = 0)
+    Tk.Label(Variables, text="kexAC").grid(row=2, column = 2)
+    Tk.Label(Variables, text="kexBC").grid(row=3, column = 0)
 
     pB_u = Tk.Entry(Variables)
     pC_u = Tk.Entry(Variables)
@@ -324,12 +326,12 @@ def init_custom(event):
     pC_u.grid(row = 0, column = 3)
     dwB_u.grid(row = 1, column = 1)
     dwC_u.grid(row = 1, column = 3)
-    R2b_u.grid(row = 2, column = 1)
-    R2c_u.grid(row = 2, column = 3)
-    kexAB_u.grid(row = 3, column = 1)
-    kexAC_u.grid(row = 3, column = 3)
-    kexBC_u.grid(row = 4, column = 1)
-    R2a_u.grid(row = 4, column = 3)
+    kexAB_u.grid(row = 2, column = 1)
+    kexAC_u.grid(row = 2, column = 3)
+    kexBC_u.grid(row = 3, column = 1)
+    R2a_u.grid(row = 3, column = 3)
+    R2b_u.grid(row = 4, column = 1)
+    R2c_u.grid(row = 4, column = 3)
 
     Tk.Button(Variables, text='Update', command=custom_update).grid(row=5, column=1, pady=4)
 
@@ -372,7 +374,7 @@ ax2.set_ylabel(r'$R_{2}+R_{ex}\,(s^{-1})$', fontsize=16)
 ax2.set_title('On-Res RD Plot ($\Omega$=0 Hz)', fontsize = 20)
 plt.axis([0, 3000, 10, 60])
 
-slp = linspace(50, 3000, 25)
+slp = linspace(150, 3000, 25)
 lo1, = ax2.plot(slp, data(lmf0, pB0, pC0, dwB0, dwC0, kexAB0, kexAC0, kexBC0, R1a0, R1b0, R1c0, R2a0, R2b0, R2c0, 0, slp, Flag = 'OnRes'), lw = 0, marker = 'o', color = 'C0')
 
     ## Update the y-data values when sliders are changed
@@ -422,12 +424,13 @@ def show_slps(label):
     pC = slider_pC.val
     dwB = slider_dwB.val 
     dwC = slider_dwC.val 
+    R2a = slider_R2a.val
     R2b = slider_R2b.val
     R2c = slider_R2c.val
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
-    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c, offset)
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c)
 
 # Call function on click
 slps.on_clicked(show_slps)
@@ -443,12 +446,13 @@ def changelmf(label):
     pC = slider_pC.val
     dwB = slider_dwB.val 
     dwC = slider_dwC.val 
+    R2a = slider_R2a.val
     R2b = slider_R2b.val
     R2c = slider_R2c.val
     kexAB = slider_kexAB.val 
     kexAC = slider_kexAC.val 
     kexBC = slider_kexBC.val
-    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c, offset)
+    redraw(lmf, pB, pC, dwB, dwC, kexAB, kexAC, kexBC, R1a0, R1b0, R1c0, R2a, R2b, R2c)
 
 # Execute on click
 atomtypeButton.on_clicked(changelmf)
@@ -456,10 +460,10 @@ atomtypeButton.on_clicked(changelmf)
 ## RadioButtons to switch B0
 # Makes axes
 Fieldax = plt.axes([0.11, 0.01, 0.1, 0.1])
-FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '800MHz', '1.1GHz'))
+FieldRadio = RadioButtons(Fieldax, ('600 MHz' ,'700 MHz', '1.1GHz', '1.2GHz'))
 # Function
 def changeField(label):
-    FieldDict = {'600 MHz':600, '700 MHz':700, '800MHz':800, '1.1GHz':1100}
+    FieldDict = {'600 MHz':600, '700 MHz':700, '1.1GHz':1100, '1.2GHz':1200}
     global Field
     Field = FieldDict[label]
     # Once the field is changes, update the lmf

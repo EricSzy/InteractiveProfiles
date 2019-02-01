@@ -14,6 +14,7 @@ fig, ax = plt.subplots(figsize = (7, 7))
 plt.subplots_adjust(left=0.25, bottom=0.25)
 plt.ylabel('Intensity', fontsize = 16)
 plt.xlabel(r'$\omega\,(ppm)$', fontsize=16)
+plt.ylim(0, 100)
 
 pB0 = .1
 wA0, wB0 = 0, 3
@@ -38,7 +39,8 @@ def setplot(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b):
     new_y = data(lmf, pB, wA, wB, kexAB, R1a0, R1b0, R2a, R2b)
     l.set_ydata(new_y)
     xmax = xf[argmax(new_y)]
-    text = 'Main peak @ %s ppm' % format(xmax, '.4f')
+    ymax = max(new_y)
+    text = 'Main peak @ %s ppm | Peak Int: %s' % (format(xmax, '.4f'), format(ymax, '.2f'))
     ax.set_title(text)
 
 def set_x(lmf):
@@ -177,4 +179,6 @@ def changelmf(label):
     plt.draw()
 
 radio.on_clicked(changelmf)
+
+
 plt.show()
